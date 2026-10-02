@@ -1,5 +1,7 @@
 {% load i18n %}
 <form method="get" class="filters" role="search" aria-label="{% translate 'Search and filter' %}">
+  {% if view %}<input type="hidden" name="view" value="{{ view }}">{% endif %}
+  {% if show_closed %}<input type="hidden" name="closed" value="1">{% endif %}
   <div class="filter-row">
     <div class="field grow">
       <label for="{{ form.q.auto_id }}">{{ form.q.label }}</label>

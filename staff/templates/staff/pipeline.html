@@ -1,0 +1,110 @@
+{% extends "staff/base.html" %}
+{% load i18n static formhelpers %}
+{% block title %}{% translate "Pipeline" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% translate "Pipeline" %}</h1>
+    <p class="help">{% blocktranslate count n=total %}{{ n }} startup{% plural %}{{ n }} startups{% endblocktranslate %}.
+      {% if view == "board" %}{% translate "Drag a card to another column to change its stage, or use “Move to…” on the card." %}{% endif %}</p>
+  </div>
+  <nav class="view-toggle" aria-label="{% translate 'View' %}">
+    <a href="?{{ filter_qs }}{% if filter_qs %}&amp;{% endif %}view=board{% if show_closed %}&amp;closed=1{% endif %}" {% if view == "board" %}aria-current="page"{% endif %}>{% translate "Board" %}</a>
+    <a href="?{{ filter_qs }}{% if filter_qs %}&amp;{% endif %}view=list{% if show_closed %}&amp;closed=1{% endif %}" {% if view == "list" %}aria-current="page"{% endif %}>{% translate "List" %}</a>
+  </nav>
+</div>
+
+{% translate "Name, description, founder or KvK number" as search_placeholder %}
+{% include "staff/_filters.html" %}
+
+<p class="status-line" id="pipeline-status" role="status" aria-live="polite"></p>
+
+{% if view == "board" %}
+<div class="board" id="board" data-move-url-template="{% url 'staff:pipeline_move' 0 %}">
+  {% for col in columns %}
+    <section class="column{% if col.collapsed %} collapsed{% endif %}" data-stage="{{ col.stage.pk }}" data-stage-name="{{ col.stage.name }}" aria-labelledby="col-{{ col.stage.pk }}">
+      <header class="column-head" style="border-top-color: {{ col.stage.colour }}">
+        <h2 id="col-{{ col.stage.pk }}">{{ col.stage.name }}</h2>
+        <span class="count" data-count>{{ col.count }}</span>
+      </header>
+      {% if col.collapsed %}
+        <p class="sub collapsed-note">{% translate "Hidden" %}</p>
+      {% else %}
+      <div class="cards" data-dropzone>
+        {% for c in col.cards %}{% with st=c.startup %}
+          <article class="pcard" draggable="true" data-id="{{ st.pk }}" aria-labelledby="card-{{ st.pk }}">
+            <h3 id="card-{{ st.pk }}"><a href="{% url 'staff:startup_detail' st.pk %}">{{ st.display_name }}</a></h3>
+            <p class="sub">{% for f in c.founders %}{{ f.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+              · <span title="{% translate 'Coach' %}"><span class="sr-only">{% translate "Coach" %}: </span>{% if st.assigned_coach %}{{ st.assigned_coach.full_name }}{% else %}{% translate "no coach" %}{% endif %}</span></p>
+            {% if c.approval_missing or c.graduation or c.stale or c.tags %}
+            <p class="badges">
+              {% if c.approval_missing %}<span class="tag tag-warn">{% translate "Approval missing" %}</span>{% elif c.graduation %}<span class="tag tag-grad">{% translate "Graduation" %}</span>{% endif %}
+              {% if c.stale %}<span class="tag tag-stale">{% blocktranslate with n=inactivity_weeks %}Quiet {{ n }}+ wks{% endblocktranslate %}</span>{% endif %}
+              {% for t in c.tags|slice:":2" %}<span class="tag">{{ t.name }}</span>{% endfor %}{% if c.tags|length > 2 %}<span class="tag">+{{ c.tags|length|add:"-2" }}</span>{% endif %}
+            </p>
+            {% endif %}
+            <details class="move-menu">
+              <summary>{% translate "Move to…" %}<span class="sr-only"> ({{ st.display_name }})</span></summary>
+              <form method="post" action="{% url 'staff:pipeline_move' st.pk %}" data-move-form>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="sr-only" for="stage-{{ st.pk }}">{% translate "Stage" %}</label>
+                <select name="stage" id="stage-{{ st.pk }}">
+                  {% for s in stages %}<option value="{{ s.pk }}" {% if s.pk == st.stage_id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary btn-small">{% translate "Move" %}</button>
+              </form>
+            </details>
+          </article>
+        {% endwith %}{% empty %}
+          <p class="empty-col">{% translate "No startups" %}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
+{% if not show_closed %}<p><a href="?{{ filter_qs }}{% if filter_qs %}&amp;{% endif %}closed=1">{% translate "Show closed stages (Alumni, Stopped)" %}</a></p>
+{% else %}<p><a href="?{{ filter_qs }}">{% translate "Hide closed stages" %}</a></p>{% endif %}
+
+{% else %}
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Startups by stage" %}</caption>
+  <thead><tr>
+    <th scope="col">{% translate "Stage" %}</th><th scope="col">{% translate "Startup / idea" %}</th><th scope="col">{% translate "Founders" %}</th>
+    <th scope="col">{% translate "Coach" %}</th><th scope="col">{% translate "Last activity" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for col in columns %}{% if not col.collapsed %}{% for c in col.cards %}{% with st=c.startup %}
+    <tr>
+      <td>
+        <form method="post" action="{% url 'staff:pipeline_move' st.pk %}" class="inline-stage" data-move-form>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <label class="sr-only" for="lstage-{{ st.pk }}">{% blocktranslate with name=st.display_name %}Stage of {{ name }}{% endblocktranslate %}</label>
+          <select name="stage" id="lstage-{{ st.pk }}" data-autosubmit>
+            {% for s in stages %}<option value="{{ s.pk }}" {% if s.pk == st.stage_id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-secondary btn-small js-hide">{% translate "Save" %}</button>
+        </form>
+      </td>
+      <td><a class="strong" href="{% url 'staff:startup_detail' st.pk %}">{{ st.display_name }}</a>
+        {% if c.approval_missing %}<span class="tag tag-warn">{% translate "Approval missing" %}</span>{% endif %}
+        {% if c.stale %}<span class="tag tag-stale">{% blocktranslate with n=inactivity_weeks %}No activity {{ n }}+ weeks{% endblocktranslate %}</span>{% endif %}</td>
+      <td>{% for f in c.founders %}{{ f.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ st.assigned_coach.full_name|default:"–" }}</td>
+      <td>{{ st.last_activity_at|date:"j M Y"|default:"–" }}</td>
+    </tr>
+  {% endwith %}{% endfor %}{% endif %}{% endfor %}
+  </tbody>
+</table>
+</div>
+{% if not show_closed %}<p><a href="?{{ filter_qs }}{% if filter_qs %}&amp;{% endif %}view=list&amp;closed=1">{% translate "Include closed stages (Alumni, Stopped)" %}</a></p>{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ js_messages|json_script:"pipeline-messages" }}
+<script src="{% static 'js/pipeline.js' %}" defer></script>
+{% endblock %}

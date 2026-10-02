@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–5 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records). The pipeline board comes next.
+**Status:** steps 1–6 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board). The activity log and follow-ups come next.
 
 ## Stack
 
@@ -94,6 +94,16 @@ person with the same questions as the public form (optionally emailing a confirm
 Admins can merge duplicate students from the student page: registrations, ideas and follow-ups move
 to the record you keep, nothing on that record is overwritten, and the duplicate is archived with a
 pointer to the kept record.
+
+## Pipeline
+
+*Staff → Pipeline* shows startups per stage as a **board** (drag a card to another column, or use
+*Move to…* on the card, which also works with the keyboard) or as a **list** with a stage menu per row.
+It uses the same filters as the startups list. Closed stages (Alumni, Stopped) are collapsed until you
+choose to show them. Every move is written to the startup's activity log as a stage change (which
+does not count as "activity" for the inactivity warning) and to the audit log. Stages are configured
+in *Admin → Pipeline stages*: name, order, colour, and whether a stage is closed or marks the intake
+as scheduled/done.
 
 ## Email
 

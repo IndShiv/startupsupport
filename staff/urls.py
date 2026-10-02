@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_records as records
+from . import views, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
@@ -26,6 +26,8 @@ urlpatterns = [
     path("startups/<int:pk>/founders/<int:founder_pk>/remove/", records.founder_remove, name="founder_remove"),
     path("graduation/<int:pk>/edit/", records.graduation_edit, name="graduation_edit"),
     path("walk-in/", records.walk_in, name="walk_in"),
+    path("pipeline/", pipeline.pipeline, name="pipeline"),
+    path("pipeline/<int:pk>/move/", pipeline.move, name="pipeline_move"),
     path("notifications/", views.notifications, name="notifications"),
     path("notifications/read/", views.notifications_read, name="notifications_read"),
     path("notifications/<int:pk>/", views.notification_open, name="notification_open"),

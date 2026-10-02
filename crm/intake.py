@@ -116,3 +116,23 @@ def recompute_open_deadlines():
             Registration.objects.filter(pk=registration.pk).update(intake_deadline=deadline)
             updated += 1
     return updated
+
+
+@transaction.atomic
+def move_to_stage(startup, stage, *, user=None):
+    """Move a startup to another pipeline stage and note it in the activity log. Returns True if it changed."""
+    if startup.stage_id == stage.pk:
+        return False
+    old = startup.stage
+    startup.stage = stage
+    startup.save(update_fields=["stage", "updated_at"])
+    Activity.objects.create(
+        startup=startup, kind=Activity.Kind.STAGE, date=timezone.localdate(), author=user,
+        body=f"Moved from “{old.name}” to “{stage.name}”.",
+    )
+    return True
+
+
+def pending_intake(startup):
+    """The startup's most recent registration that still has no intake scheduled, if any."""
+    return startup.registrations.filter(intake_scheduled_on__isnull=True, intake_held_on__isnull=True).order_by("-submitted_at").first()

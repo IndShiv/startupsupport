@@ -248,6 +248,7 @@ class Activity(models.Model):
         EVENT = "event", _("Event attendance")
         REFERRAL = "referral", _("Referral")
         INTAKE = "intake", _("Intake")
+        STAGE = "stage", _("Stage change")
 
     startup = models.ForeignKey(Startup, verbose_name=_("startup"), on_delete=models.CASCADE, related_name="activities")
     kind = models.CharField(_("type"), max_length=10, choices=Kind.choices, default=Kind.NOTE)
@@ -267,6 +268,8 @@ class Activity(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        if self.kind == self.Kind.STAGE:
+            return  # bookkeeping, not contact with the startup: doesn't reset "no activity for X weeks"
         Startup.objects.filter(pk=self.startup_id).filter(
             Q(last_activity_at__isnull=True) | Q(last_activity_at__lt=self.created_at)
         ).update(last_activity_at=self.created_at)

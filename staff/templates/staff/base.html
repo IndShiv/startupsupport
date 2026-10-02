@@ -22,6 +22,7 @@
         <ul>
           {% url 'staff:intake_queue' as intake_url %}
           <li><a href="{{ intake_url }}" {% if request.path|slice:":14" == "/staff/intake/" %}aria-current="page"{% endif %}>{% translate "Intake queue" %}</a></li>
+          <li><a href="{% url 'staff:pipeline' %}" {% if request.path|slice:":16" == "/staff/pipeline/" %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a></li>
           <li><a href="{% url 'staff:student_list' %}" {% if request.path|slice:":16" == "/staff/students/" %}aria-current="page"{% endif %}>{% translate "Students" %}</a></li>
           <li><a href="{% url 'staff:startup_list' %}" {% if request.path|slice:":16" == "/staff/startups/" %}aria-current="page"{% endif %}>{% translate "Startups" %}</a></li>
           <li><a href="{% url 'staff:walk_in' %}" {% if request.path == "/staff/walk-in/" %}aria-current="page"{% endif %}>{% translate "Add walk-in" %}</a></li>
@@ -50,5 +51,7 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+  <script>document.body.classList.add("js");</script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
