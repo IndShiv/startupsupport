@@ -48,8 +48,7 @@ def register(request):
         "form": form,
         "rate_limited": rate_limited,
         "js_messages": js_messages,
-        "contact": SiteText.objects.filter(key="contact").first(),
-        "texts": {key: SiteText.objects.filter(key=key).first() for key in ("form_intro", "minor_note", "coach_note", "graduation_approval_notice", "contact")},
+        "texts": {key: SiteText.objects.filter(key=key).first() for key in ("form_intro", "minor_note", "coach_note", "graduation_approval_notice")},
     }, status=status)
 
 
@@ -57,7 +56,6 @@ def thanks(request):
     registration_id = request.session.pop("registration_id", None)
     return render(request, "public/thanks.html", {
         "text": SiteText.objects.filter(key="thank_you").first(),
-        "contact": SiteText.objects.filter(key="contact").first(),
         "registered": registration_id is not None,
     })
 
@@ -66,6 +64,5 @@ def privacy(request):
     statement = PrivacyStatement.current()
     return render(request, "public/privacy.html", {
         "statement": statement,
-        "contact": SiteText.objects.filter(key="contact").first(),
         "title": _("Privacy statement"),
     })

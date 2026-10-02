@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AppSettings, ClosureDay, Domain, PipelineStage, PrivacyStatement, SiteText, StudyYear
+from .models import AppSettings, ClosureDay, Domain, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
 
 
 class OrderedOptionAdmin(admin.ModelAdmin):
@@ -38,6 +38,12 @@ class PrivacyStatementAdmin(admin.ModelAdmin):
         if obj and obj.published_at:
             return ["version", "body", "published_at"]
         return []
+
+
+@admin.register(Partner)
+class PartnerAdmin(admin.ModelAdmin):
+    list_display = ["name", "url", "active", "order"]
+    list_editable = ["active", "order"]
 
 
 @admin.register(ClosureDay)

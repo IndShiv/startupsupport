@@ -114,6 +114,24 @@ class ClosureDay(models.Model):
         return f"{self.date:%Y-%m-%d} {self.name}"
 
 
+class Partner(models.Model):
+    """Partners and supporters shown in the footer of public pages (e.g. B'WISE)."""
+
+    name = models.CharField(_("name"), max_length=100, unique=True)
+    logo = models.ImageField(_("logo"), upload_to="partners/", blank=True, help_text=_("PNG or SVG with a transparent background works best."))
+    url = models.URLField(_("website"), blank=True)
+    active = models.BooleanField(_("show on public pages"), default=True)
+    order = models.PositiveIntegerField(_("order"), default=0)
+
+    class Meta:
+        ordering = ["order", "name"]
+        verbose_name = _("partner")
+        verbose_name_plural = _("partners")
+
+    def __str__(self):
+        return self.name
+
+
 class AppSettings(models.Model):
     """Singleton with tunable business rules."""
 
@@ -150,5 +168,5 @@ class AppSettings(models.Model):
         return obj
 
 
-for model in (Domain, StudyYear, PipelineStage, SiteText, PrivacyStatement, ClosureDay, AppSettings):
+for model in (Domain, StudyYear, PipelineStage, SiteText, PrivacyStatement, ClosureDay, Partner, AppSettings):
     auditlog.register(model)

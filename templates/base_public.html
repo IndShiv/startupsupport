@@ -6,15 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% translate "BUas Startup Support" %}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/public.css' %}">
-  <link rel="icon" href="{% static 'img/logo-placeholder.svg' %}" type="image/svg+xml">
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
 </head>
 <body class="no-js">
   <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
   <header class="site-header">
     <div class="container header-inner">
       <a href="{% url 'public:register' %}" class="brand">
-        <img src="{% static 'img/logo-placeholder.svg' %}" alt="" width="44" height="44">
-        <span><strong>BUas</strong> {% translate "Startup Support" %}</span>
+        <img src="{% static 'img/buas-logo.png' %}" alt="Breda University of Applied Sciences" width="173" height="56" class="brand-logo">
+        <span class="brand-name">{% translate "Startup Support" %}</span>
       </a>
     </div>
   </header>
@@ -23,7 +24,21 @@
   </main>
   <footer class="site-footer">
     <div class="container">
-      {% if contact %}<div class="contact">{{ contact.body|plaintext_html }}</div>{% endif %}
+      {% if partners %}
+        <section class="partners" aria-labelledby="partners-title">
+          <h2 id="partners-title" class="partners-title">{% translate "Supported by" %}</h2>
+          <ul class="partner-list">
+            {% for partner in partners %}
+              <li>
+                {% if partner.url %}<a href="{{ partner.url }}" target="_blank" rel="noopener">{% endif %}
+                {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" height="32">{% else %}{{ partner.name }}{% endif %}
+                {% if partner.url %}<span class="sr-only"> ({% translate "opens in a new tab" %})</span></a>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+      {% with contact_text=contact %}{% if contact_text %}<div class="contact">{{ contact_text.body|plaintext_html }}</div>{% endif %}{% endwith %}
       <p><a href="{% url 'public:privacy' %}">{% translate "Privacy statement" %}</a> · Breda University of Applied Sciences</p>
     </div>
   </footer>

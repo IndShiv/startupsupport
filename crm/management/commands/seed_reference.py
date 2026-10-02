@@ -15,7 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from crm.models import Coach
-from siteconfig.models import AppSettings, Domain, PipelineStage, PrivacyStatement, SiteText, StudyYear
+from siteconfig.models import AppSettings, Domain, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
 
 DOMAINS = [
     # (name, academy code, is_employee)
@@ -145,6 +145,7 @@ COACH_EDITABLE_MODELS = {
         "pipelinestage": ["view"],
         "privacystatement": ["view"],
         "closureday": ["view", "add", "change", "delete"],
+        "partner": ["view", "add", "change"],
     },
 }
 
@@ -174,9 +175,17 @@ class Command(BaseCommand):
             PrivacyStatement.objects.create(version="1.0-draft", body=PRIVACY_V1, published_at=timezone.now())
 
         AppSettings.load()
+        self._seed_partners()
         self._seed_coaches()
         self._seed_groups()
         self.stdout.write(self.style.SUCCESS("Reference data is in place."))
+
+    def _seed_partners(self):
+        partner, created = Partner.objects.get_or_create(name="B'WISE", defaults={"order": 10})
+        if created:
+            logo = Path(settings.BASE_DIR) / "static" / "img" / "partners-bwise.png"
+            with logo.open("rb") as fh:
+                partner.logo.save("bwise.png", File(fh), save=True)
 
     def _seed_coaches(self):
         private_dir = Path(settings.BASE_DIR) / "seed_data" / "private"

@@ -160,3 +160,19 @@ def test_privacy_page(client, reference):
     response = client.get(reverse("public:privacy"))
     assert response.status_code == 200
     assert "What we store" in response.content.decode()
+
+
+def test_public_pages_show_branding_and_partners(client, reference):
+    for url in (URL, reverse("public:thanks"), reverse("public:privacy")):
+        content = client.get(url).content.decode()
+        assert 'alt="Breda University of Applied Sciences"' in content
+        assert 'alt="B&#x27;WISE"' in content
+        assert "startupsupport@buas.nl" in content
+
+
+def test_inactive_partner_is_hidden(client, reference):
+    from siteconfig.models import Partner
+
+    Partner.objects.update(active=False)
+    content = client.get(URL).content.decode()
+    assert "Supported by" not in content

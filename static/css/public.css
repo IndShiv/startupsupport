@@ -1,8 +1,10 @@
-/* BUSS public pages. Brand colours are placeholders until the BUas brand kit arrives:
-   change the variables below. All text colours meet WCAG 2.1 AA (4.5:1) on their background. */
+/* BUSS public pages in BUas colours (navy #00426e, orange #ed7623, taken from the logo).
+   All text colours meet WCAG 2.1 AA (4.5:1) on their background; the BUas orange itself is
+   only 2.9:1 on white, so it is used for accents and a darker shade is used for text. */
 :root {
-  --brand-navy: #0b2e4f;       /* primary: buttons, header (13.6:1 on white) */
-  --brand-orange: #f08a24;     /* accents only, never small text */
+  --brand-navy: #00426e;       /* primary: buttons, headings (10.5:1 on white) */
+  --brand-navy-hover: #00335a;
+  --brand-orange: #ed7623;     /* accents only, never small text */
   --brand-orange-text: #a84a00;/* orange for text (5.6:1 on white) */
   --text: #1f2937;
   --muted: #4b5563;            /* 7.6:1 on white */
@@ -34,15 +36,20 @@ img { max-width: 100%; }
 .skip-link:focus { left: 1rem; }
 
 /* Header / footer */
-.site-header { background: var(--brand-navy); color: #fff; border-bottom: 4px solid var(--brand-orange); }
-.header-inner { display: flex; align-items: center; min-height: 4rem; }
-.brand { display: flex; align-items: center; gap: .75rem; color: #fff; text-decoration: none; font-size: 1.15rem; }
-.brand:hover { color: #fff; }
-.brand img { border-radius: 8px; background: #fff; }
+.site-header { background: #fff; border-bottom: 4px solid var(--brand-orange); }
+.header-inner { display: flex; align-items: center; min-height: 5rem; padding-top: .6rem; padding-bottom: .6rem; }
+.brand { display: flex; align-items: center; gap: 1rem; color: var(--brand-navy); text-decoration: none; }
+.brand:hover { color: var(--brand-navy); }
+.brand-logo { height: 56px; width: auto; }
+.brand-name { font-size: 1.25rem; font-weight: 700; padding-left: 1rem; border-left: 2px solid var(--border-light); line-height: 1.2; }
 .site-footer { margin-top: 3rem; padding: 1.5rem 0 2rem; color: var(--muted); font-size: .95rem; border-top: 1px solid var(--border-light); background: var(--bg); }
 .site-footer p { margin: .25rem 0; }
+.partners { padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); }
+.partners-title { font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 .5rem; }
+.partner-list { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; margin: 0; padding: 0; }
+.partner-list img { height: 32px; width: auto; display: block; }
 
-main { padding-top: 1.5rem; outline: none; }
+main.container { padding-top: 1.5rem; outline: none; }
 h1 { font-size: 1.9rem; line-height: 1.2; color: var(--brand-navy); margin: 0 0 .75rem; }
 h2 { font-size: 1.4rem; color: var(--brand-navy); margin: 0 0 1rem; }
 
@@ -140,7 +147,7 @@ textarea { resize: vertical; }
 .no-js [data-prev], .no-js [data-next] { display: none; }
 .btn { font: inherit; font-weight: 600; padding: .7rem 1.4rem; border-radius: 8px; border: 2px solid var(--brand-navy); cursor: pointer; min-height: 2.75rem; }
 .btn-primary { background: var(--brand-navy); color: #fff; margin-left: auto; }
-.btn-primary:hover { background: #12406b; }
+.btn-primary:hover { background: var(--brand-navy-hover); }
 .btn-secondary { background: #fff; color: var(--brand-navy); }
 .btn[disabled] { opacity: .6; cursor: wait; }
 
@@ -156,6 +163,8 @@ textarea { resize: vertical; }
 @media (max-width: 40rem) {
   body { font-size: 1rem; }
   h1 { font-size: 1.55rem; }
+  .brand-logo { height: 40px; }
+  .brand-name { font-size: 1rem; padding-left: .75rem; }
   .intro, .form-section { padding: 1.1rem; }
   .step-label { display: none; }
   .step-status { position: static; width: auto; height: auto; clip: auto; white-space: normal; margin-top: .5rem; text-align: center; font-weight: 600; }
