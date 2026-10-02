@@ -61,7 +61,6 @@ COACHES = [
     ("Remco", "Bergwerff", "AFT", ["Tourism"]),
     ("Shival", "Indermun", "ADSAI", ["Data Science & AI"]),
     ("Joyce", "Ridderhof", "ALE", ["Leisure & Events"]),
-    ("Pim", "Dopheide", "ALE", ["Leisure & Events"]),
     ("Roeland", "Bottema", "ALE", ["Leisure & Events"]),
     ("Erik", "van Diffelen", "LOG", ["Logistics"]),
     ("Marc", "Holvoet", "BE", ["Built Environment"]),
@@ -102,7 +101,7 @@ SITE_TEXTS = {
     ),
     "contact": (
         "Questions?",
-        "Email the BUSS team at buss-placeholder@example.org.",
+        "Email the BUSS team at startupsupport@buas.nl.",
         "Footer of public pages",
     ),
 }
@@ -122,7 +121,7 @@ How long we keep it
 Until 2 years after your last contact with BUSS or after you become an alumnus. After that your data is anonymised.
 
 Your rights
-You can ask to see, correct, export or delete your data at any time by emailing the BUSS team.
+You can ask to see, correct, export or delete your data at any time by emailing the BUSS team at startupsupport@buas.nl.
 """
 
 COACH_EDITABLE_MODELS = {

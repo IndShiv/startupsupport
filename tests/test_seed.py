@@ -14,7 +14,7 @@ def test_seed_reference_is_idempotent():
     assert Domain.objects.count() == 10
     assert StudyYear.objects.filter(is_graduation_track=True).count() == 1
     assert PipelineStage.initial().name == "Registered"
-    assert Coach.objects.count() == 12
+    assert Coach.objects.count() == 11
     assert PrivacyStatement.current() is not None
     assert set(Group.objects.values_list("name", flat=True)) == {"Admin", "Coach"}
 

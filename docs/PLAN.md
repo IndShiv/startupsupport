@@ -18,9 +18,9 @@ mature libraries for audit logging (`django-auditlog`), OIDC/Entra ID
 | Hand-in date | Must be in the future; warning when < 4 weeks away. |
 | Intake clock | Stops at **intake scheduled**; held date + coach recorded separately. |
 | Working days | Start counting the working day after registration; skip weekends, Dutch public holidays and admin-editable BUas closure days. |
-| Coaches | 12 coaches from "Meet the coaches" (incl. Pim Dopheide). Coach domains derived from academy codes. |
+| Coaches | 11 coaches from "Meet the coaches" (Pim Dopheide has left). Coach domains derived from academy codes. |
 | Branding | Placeholder logo; BUas-like palette in CSS variables. |
-| Staff email | Placeholder shared mailbox (configurable). In-app notifications as well. |
+| Staff email | startupsupport@buas.nl (configurable). In-app notifications as well. |
 | Permissions | Coaches: view/edit all records **and** edit form content (page text, option lists, coach profiles). Admin-only: users/roles, merge, delete/anonymise, imports, system settings. |
 | Note visibility | All coaches see all notes; optional "admin only" flag per note. |
 | Retention | Default 2 years after last activity / alumni, configurable. |

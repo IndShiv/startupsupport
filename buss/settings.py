@@ -120,7 +120,7 @@ LOGIN_URL = "/admin/login/"
 
 # Email: console locally; SMTP or Microsoft Graph configured in step 3.
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "BUSS <buss-placeholder@example.org>")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "BUSS Startup Support <startupsupport@buas.nl>")
 
 # Production hardening (only active when DEBUG is off).
 if not DEBUG:

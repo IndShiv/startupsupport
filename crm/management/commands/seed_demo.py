@@ -127,7 +127,7 @@ class Command(BaseCommand):
     def _create_users(self):
         admin_group = Group.objects.get(name="Admin")
         coach_group = Group.objects.get(name="Coach")
-        admin = User.objects.create_user("admin", "buss-placeholder@example.org", DEV_PASSWORD, is_staff=True, is_superuser=True, first_name="BUSS", last_name="Admin")
+        admin = User.objects.create_user("admin", "admin@example.org", DEV_PASSWORD, is_staff=True, is_superuser=True, first_name="BUSS", last_name="Admin")
         admin.groups.add(admin_group)
         for coach in Coach.objects.all():
             username = coach.first_name.lower()

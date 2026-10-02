@@ -125,7 +125,7 @@ class AppSettings(models.Model):
     intake_working_days = models.PositiveSmallIntegerField(_("intake within (working days)"), default=10)
     intake_due_soon_days = models.PositiveSmallIntegerField(_("highlight when due within (working days)"), default=2)
     staff_notification_mode = models.CharField(_("new registration notifications"), max_length=10, choices=NotificationMode.choices, default=NotificationMode.BOTH)
-    staff_notification_email = models.EmailField(_("staff notification address"), default="buss-placeholder@example.org")
+    staff_notification_email = models.EmailField(_("staff notification address"), default="startupsupport@buas.nl")
     retention_years = models.PositiveSmallIntegerField(_("flag for anonymisation after (years inactive or alumni)"), default=2)
     inactivity_weeks = models.PositiveSmallIntegerField(_("dashboard: no activity for (weeks)"), default=6)
     rate_limit_per_hour = models.PositiveSmallIntegerField(_("max registrations per hour per IP"), default=5)
