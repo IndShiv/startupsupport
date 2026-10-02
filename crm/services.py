@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from siteconfig.models import AppSettings, PipelineStage
@@ -135,3 +136,49 @@ def create_registration(data, *, summary, source=Registration.Source.FORM, creat
             )
 
     return SubmissionResult(registration=registration, is_duplicate=is_duplicate)
+
+
+def duplicate_candidates(student, limit=10):
+    """Students that look like the same person: same number, email, phone or full name."""
+    query = Q(first_name__iexact=student.first_name, last_name__iexact=student.last_name) | Q(email__iexact=student.email)
+    if student.student_number:
+        query |= Q(student_number=student.student_number)
+    if student.phone:
+        query |= Q(phone=student.phone)
+    return Student.objects.current().filter(query).exclude(pk=student.pk)[:limit]
+
+
+@transaction.atomic
+def merge_students(target, duplicate):
+    """Move everything from `duplicate` onto `target` and mark the duplicate as merged.
+
+    The duplicate record is kept (archived, pointing at the target) so the audit trail and
+    old links stay intelligible; GDPR anonymisation (step 12) also covers merged records.
+    """
+    if target.pk == duplicate.pk:
+        raise ValueError("Cannot merge a student into itself.")
+    if duplicate.merged_into_id:
+        raise ValueError("This student has already been merged.")
+
+    Registration.objects.filter(student=duplicate).update(student=target)
+    GraduationTrack.objects.filter(student=duplicate).update(student=target)
+    FollowUp.objects.filter(student=duplicate).update(student=target)
+    for link in Founder.objects.filter(student=duplicate):
+        if Founder.objects.filter(student=target, startup=link.startup).exists():
+            link.delete()
+        else:
+            link.student = target
+            link.save(update_fields=["student"])
+
+    # Fill gaps on the surviving record; never overwrite what is there.
+    for field in ("student_number", "phone"):
+        if not getattr(target, field) and getattr(duplicate, field):
+            setattr(target, field, getattr(duplicate, field))
+    target.archived_at = None
+    target.save()
+
+    Student.objects.filter(merged_into=duplicate).update(merged_into=target)
+    duplicate.merged_into = target
+    duplicate.archived_at = timezone.now()
+    duplicate.save(update_fields=["merged_into", "archived_at"])
+    return target

@@ -34,3 +34,11 @@ def describedby(field):
 @register.filter
 def in_list(value, items):
     return value in items
+
+
+@register.filter
+def person(user, fallback="–"):
+    """A user's full name, their username, or the fallback when there is no user."""
+    if not user:
+        return fallback
+    return user.get_full_name() or user.username

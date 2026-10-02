@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="pagination">
+  <span>{% blocktranslate count n=page.paginator.count %}{{ n }} result{% plural %}{{ n }} results{% endblocktranslate %}</span>
+  {% if page.has_other_pages %}
+  <nav aria-label="{% translate 'Pages' %}">
+    {% if page.has_previous %}<a href="?{{ qs }}{% if qs %}&amp;{% endif %}page={{ page.previous_page_number }}">← {% translate "Previous" %}</a>{% endif %}
+    <span>{% blocktranslate with n=page.number total=page.paginator.num_pages %}Page {{ n }} of {{ total }}{% endblocktranslate %}</span>
+    {% if page.has_next %}<a href="?{{ qs }}{% if qs %}&amp;{% endif %}page={{ page.next_page_number }}">{% translate "Next" %} →</a>{% endif %}
+  </nav>
+  {% endif %}
+</div>

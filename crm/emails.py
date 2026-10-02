@@ -246,11 +246,13 @@ def notify_staff_in_app(registration):
     Notification.objects.bulk_create(Notification(user=user, message=message[:300], url=url) for user in notification_recipients())
 
 
-def registration_submitted(registration_id, *, confirm_to_student=True):
+def registration_submitted(registration_id, *, confirm_to_student=True, notify_staff=True):
     """Send everything that should happen after a registration is stored."""
     registration = Registration.objects.select_related("student__domain", "student__study_year", "preferred_coach").get(pk=registration_id)
     if confirm_to_student:
         send_registration_email(Key.REGISTRATION_CONFIRMATION, registration)
+    if not notify_staff:
+        return
     mode = AppSettings.load().staff_notification_mode
     if mode in (AppSettings.NotificationMode.EMAIL, AppSettings.NotificationMode.BOTH):
         send_registration_email(Key.STAFF_NEW_REGISTRATION, registration)

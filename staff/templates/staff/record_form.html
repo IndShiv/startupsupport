@@ -1,0 +1,21 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url back.0 back.1 %}">← {% translate "Back" %}</a></p>
+<h1>{{ title }}</h1>
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  {% if student %}<input type="hidden" name="student" value="{{ student.pk }}">{% endif %}
+  {% if form.non_field_errors %}<p class="error" role="alert">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+  {% for field in form %}
+    {% if field.name == "confirm_domain" and not form.domain_warning %}{% elif field.widget_type == "checkboxselectmultiple" %}
+      <fieldset class="field"><legend>{{ field.label }}</legend><div class="tag-options">{% for c in field %}<label class="option">{{ c.tag }} {{ c.choice_label }}</label>{% endfor %}</div></fieldset>
+    {% else %}{% include "staff/_field.html" %}{% endif %}
+  {% endfor %}
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+    <a href="{% url back.0 back.1 %}">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

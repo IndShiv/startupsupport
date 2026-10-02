@@ -1,0 +1,11 @@
+{% load i18n formhelpers %}
+{% if history %}
+<details class="card history">
+  <summary><h2>{% translate "Change history" %}</h2></summary>
+  <ul class="plain">
+    {% for e in history %}
+      <li><time datetime="{{ e.timestamp|date:'c' }}">{{ e.timestamp|date:"j M Y, H:i" }}</time> · {% translate "system / registration form" as system %}{{ e.actor|person:system }} · {{ e.get_action_display }}{% if e.changes_dict %}: {{ e.changes_dict.keys|join:", " }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}

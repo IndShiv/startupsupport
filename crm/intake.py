@@ -49,11 +49,17 @@ def coaches_with_caseload():
     )
 
 
+def conflicting_students(students, coach):
+    """Graduation-track students whose own domain is one of the coach's home domains."""
+    if coach is None:
+        return []
+    coach_domains = {d.pk for d in coach.domains.all()}
+    return [s for s in students if s.on_graduation_track and s.domain_id in coach_domains]
+
+
 def domain_conflict(registration, coach):
     """Graduation-track students must get a coach from a different domain than their own."""
-    if coach is None or not registration.student.on_graduation_track:
-        return False
-    return coach.domains.filter(pk=registration.student.domain_id).exists()
+    return bool(conflicting_students([registration.student], coach))
 
 
 def advance_stage(startup, *, scheduled=False, done=False):

@@ -1,0 +1,25 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Merge students" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:student_detail' target.pk %}">← {{ target.full_name }}</a></p>
+<h1>{% translate "Merge duplicate students" %}</h1>
+<p class="help">{% blocktranslate with keep=target.full_name dup=duplicate.full_name %}Everything linked to the duplicate is moved to the record you keep. Details on the kept record are not overwritten; empty student number or phone are filled in from the duplicate. The duplicate is archived and points to the kept record.{% endblocktranslate %}</p>
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Comparison" %}</caption>
+  <thead><tr><th scope="col"></th><th scope="col">{% translate "Keep" %}</th><th scope="col">{% translate "Duplicate (will be merged)" %}</th></tr></thead>
+  <tbody>
+    {% for label, a, b in rows %}
+      <tr><th scope="row">{{ label|capfirst }}</th><td>{{ a|default:"–" }}</td><td{% if a != b %} class="differs"{% endif %}>{{ b|default:"–" }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p>{% blocktranslate with r=moving.registrations s=moving.startups f=moving.follow_ups %}Moving: {{ r }} registration(s), {{ s }} startup link(s), {{ f }} follow-up(s).{% endblocktranslate %}</p>
+<form method="post" class="actions-row">{% csrf_token %}
+  <button type="submit" class="btn btn-primary">{% translate "Merge" %}</button>
+  <a href="{% url 'staff:student_merge' duplicate.pk target.pk %}">{% translate "Keep the other record instead" %}</a>
+  <a href="{% url 'staff:student_detail' target.pk %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

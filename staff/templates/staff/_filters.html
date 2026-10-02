@@ -1,0 +1,29 @@
+{% load i18n %}
+<form method="get" class="filters" role="search" aria-label="{% translate 'Search and filter' %}">
+  <div class="filter-row">
+    <div class="field grow">
+      <label for="{{ form.q.auto_id }}">{{ form.q.label }}</label>
+      <input type="search" name="q" id="{{ form.q.auto_id }}" value="{{ form.q.value|default:'' }}" placeholder="{{ search_placeholder }}">
+    </div>
+    <div class="field"><label for="{{ form.scope.auto_id }}">{{ form.scope.label }}</label>{{ form.scope }}</div>
+    <div class="field"><label for="{{ form.status.auto_id }}">{{ form.status.label }}</label>{{ form.status }}</div>
+    <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
+  </div>
+  <details class="more-filters" {% if form.active_filter_count %}open{% endif %}>
+    <summary>{% translate "More filters" %}{% if form.active_filter_count %} ({{ form.active_filter_count }} {% translate "active" %}){% endif %}</summary>
+    <div class="filter-grid">
+      {% for field in form %}
+        {% if field.name not in "q scope status" %}
+          {% if field.widget_type == "checkboxselectmultiple" %}
+            <fieldset class="field span-all"><legend>{{ field.label }}</legend><div class="tag-options">{% for c in field %}<label class="option">{{ c.tag }} {{ c.choice_label }}</label>{% endfor %}</div></fieldset>
+          {% elif field.widget_type == "checkbox" %}
+            <div class="field checkbox">{{ field }}<label for="{{ field.auto_id }}">{{ field.label }}</label></div>
+          {% else %}
+            <div class="field"><label for="{{ field.auto_id }}">{{ field.label }}</label>{{ field }}</div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    <p><a href="?">{% translate "Clear all filters" %}</a></p>
+  </details>
+</form>

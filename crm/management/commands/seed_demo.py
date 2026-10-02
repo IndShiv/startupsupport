@@ -238,6 +238,11 @@ class Command(BaseCommand):
             description, goals = rng.choice(sum(IDEAS.values(), []))
             self._register(student, submitted, description, goals, recent=False, waiting=False, duplicate=True)
 
+        # Students exist since their first registration.
+        for student in students:
+            first = student.registrations.order_by("submitted_at").first()
+            Student.objects.filter(pk=student.pk).update(created_at=first.submitted_at)
+
         # A startup with two founders.
         startup = Startup.objects.filter(stage__name="Coaching").first()
         if startup:
@@ -256,6 +261,7 @@ class Command(BaseCommand):
             stage=stage,
         )
         Startup.objects.filter(pk=startup.pk).update(created_at=submitted)
+        startup.created_at = submitted  # keep the instance in sync; later saves write it back
         Founder.objects.create(startup=startup, student=student, joined_on=submitted.date())
         deadline = add_working_days(submitted.date(), self.settings.intake_working_days)
         reg = Registration.objects.create(

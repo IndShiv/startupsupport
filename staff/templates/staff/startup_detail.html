@@ -1,0 +1,107 @@
+{% extends "staff/base.html" %}
+{% load i18n formhelpers %}
+{% block title %}{{ st.display_name }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:startup_list' %}">← {% translate "Startups" %}</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ st.display_name }}</h1>
+    <p>
+      <span class="tag" style="border-color: {{ st.stage.colour }}"><span class="stage-dot" style="background: {{ st.stage.colour }}" aria-hidden="true"></span>{{ st.stage.name }}</span>
+      {% for t in st.tags.all %}<span class="tag">{{ t.name }}</span>{% endfor %}
+      {% if st.archived_at %}<span class="tag">{% translate "Archived" %}</span>{% endif %}
+    </p>
+  </div>
+  <div class="actions-row">
+    <a class="btn btn-secondary" href="{% url 'staff:startup_edit' st.pk %}">{% translate "Edit" %}</a>
+    <form method="post" action="{% url 'staff:startup_archive' st.pk %}">{% csrf_token %}
+      <button type="submit" class="btn btn-secondary">{% if st.archived_at %}{% translate "Restore" %}{% else %}{% translate "Archive" %}{% endif %}</button>
+    </form>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="stack">
+    <section class="card" aria-labelledby="overview-title">
+      <h2 id="overview-title">{% translate "Overview" %}</h2>
+      <dl class="facts">
+        <dt>{% translate "Coach" %}</dt><dd>{{ st.assigned_coach.full_name|default:"–" }}</dd>
+        <dt>{% translate "Paying customers" %}</dt><dd>{{ st.has_paying_customers|yesno:_("Yes,No,Unknown") }}</dd>
+        <dt>{% translate "Idea validated" %}</dt><dd>{{ st.idea_validated|yesno:_("Yes,No,Unknown") }}</dd>
+        <dt>{% translate "KvK number" %}</dt><dd>{{ st.kvk_number|default:"–" }}</dd>
+        <dt>{% translate "Last activity" %}</dt><dd>{{ st.last_activity_at|date:"j F Y"|default:"–" }}</dd>
+        <dt>{% translate "Created" %}</dt><dd>{{ st.created_at|date:"j F Y" }}</dd>
+      </dl>
+    </section>
+
+    <section class="card" aria-labelledby="founders-title">
+      <h2 id="founders-title">{% translate "Founders" %}</h2>
+      <ul class="founders">
+        {% for link in founder_links %}
+          <li>
+            <a href="{% url 'staff:student_detail' link.student.pk %}" class="strong">{{ link.student.full_name }}</a>
+            <span class="sub">{{ link.role|default:_("Founder") }} · {{ link.student.domain.name }} · {{ link.student.study_year.name }}</span>
+            {% if founder_links|length > 1 %}
+            <form method="post" action="{% url 'staff:founder_remove' st.pk link.pk %}">{% csrf_token %}
+              <button type="submit" class="link-button">{% translate "Remove" %}<span class="sr-only"> {{ link.student.full_name }}</span></button>
+            </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="get" class="inline-search">
+        <label for="founder_q">{% translate "Add a co-founder (search existing students)" %}</label>
+        <div class="filter-row"><input type="search" id="founder_q" name="founder_q" value="{{ founder_q }}"><button class="btn btn-secondary" type="submit">{% translate "Search" %}</button></div>
+      </form>
+      {% if founder_q %}
+        {% for s in founder_results %}
+          <form method="post" action="{% url 'staff:founder_add' st.pk %}" class="founder-result">{% csrf_token %}
+            <input type="hidden" name="student" value="{{ s.pk }}">
+            <span>{{ s.full_name }} · {{ s.student_number|default:"–" }} · {{ s.email }}</span>
+            <label class="sr-only" for="role-{{ s.pk }}">{% translate "Role" %}</label>
+            <input type="text" name="role" id="role-{{ s.pk }}" placeholder="{% translate 'Role (optional)' %}">
+            <button type="submit" class="btn btn-secondary">{% translate "Add" %}</button>
+          </form>
+        {% empty %}
+          <p class="sub">{% translate "No matching students. New students can be added as a walk-in." %}</p>
+        {% endfor %}
+      {% endif %}
+    </section>
+
+    {% for track in tracks %}
+    <section class="card" aria-labelledby="grad-{{ track.pk }}">
+      <h2 id="grad-{{ track.pk }}">{% translate "Graduating within own company" %}: {{ track.student.full_name }}</h2>
+      {% if track.approval_missing %}<p class="notice">{% translate "Programme approval is still missing." %}</p>{% endif %}
+      <dl class="facts">
+        <dt>{% translate "Approval" %}</dt><dd>{{ track.get_approval_display }}</dd>
+        <dt>{% translate "Topic" %}</dt><dd>{{ track.topic }}</dd>
+        <dt>{% translate "Supervisor" %}</dt><dd>{{ track.supervisor_name }}</dd>
+        <dt>{% translate "Hand-in date" %}</dt><dd>{{ track.hand_in_date|date:"j F Y" }}</dd>
+      </dl>
+      <p><a href="{% url 'staff:graduation_edit' track.pk %}">{% translate "Edit graduation details" %}</a></p>
+    </section>
+    {% endfor %}
+  </div>
+
+  <div class="stack">
+    <section class="card" aria-labelledby="idea-title">
+      <h2 id="idea-title">{% translate "The idea" %}</h2>
+      <h3>{% translate "Description" %}</h3><p>{{ st.description|linebreaksbr }}</p>
+      <h3>{% translate "Goals for the coach track" %}</h3><p>{{ st.goals|linebreaksbr|default:"–" }}</p>
+    </section>
+
+    <section class="card" aria-labelledby="activity-title">
+      <h2 id="activity-title">{% translate "Recent activity" %}</h2>
+      {% for a in activities %}
+        <article class="activity"><p class="sub">{{ a.date|date:"j M Y" }} · {{ a.get_kind_display }} · {{ a.author|person }}{% if a.admin_only %} · {% translate "admin only" %}{% endif %}</p><p>{{ a.body|linebreaksbr }}</p></article>
+      {% empty %}<p class="sub">{% translate "No activity yet." %}</p>{% endfor %}
+    </section>
+
+    <section class="card" aria-labelledby="sregs-title">
+      <h2 id="sregs-title">{% translate "Registrations" %}</h2>
+      <ul class="plain">{% for r in registrations %}<li><a href="{% url 'staff:intake_detail' r.pk %}">{{ r.submitted_at|date:"j M Y" }}</a> · {{ r.student.full_name }} · {{ r.get_source_display }}</li>{% endfor %}</ul>
+    </section>
+    {% include "staff/_history.html" %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Add walk-in" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Add a walk-in registration" %}</h1>
+<p class="help">{% translate "The same questions as the public form, for a student who registers in person. If the student is already known (same student number or email), the idea is linked to the existing record. After saving you go to the intake page, where you can record the intake right away." %}</p>
+{% if form.errors %}
+  <div class="alert alert-error" role="alert"><h2>{% translate "Please check the highlighted fields." %}</h2></div>
+{% endif %}
+<form method="post" novalidate class="walk-in">
+  {% csrf_token %}
+  {{ form.privacy_version }}
+  {% for section in form.sections %}
+    <section class="card form-card" aria-labelledby="h-{{ section.key }}">
+      <h2 id="h-{{ section.key }}">{{ section.title }}</h2>
+      {% if section.key == "graduation" %}<p class="help">{% translate "Only for students in “Year 4 and graduating within own company”; ignored otherwise." %}</p>{% endif %}
+      {% for field in section.fields %}{% include "public/_field.html" %}{% endfor %}
+      {% if section.key == "finally" %}{% with field=form.send_confirmation %}{% include "public/_field.html" %}{% endwith %}{% endif %}
+    </section>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary">{% translate "Register walk-in" %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Startups" %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{% translate "Startups & ideas" %}</h1></div>
+{% translate "Name, description, founder or KvK number" as search_placeholder %}
+{% include "staff/_filters.html" %}
+{% include "staff/_pagination.html" %}
+{% if page.object_list %}
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Startups" %}</caption>
+  <thead><tr>
+    <th scope="col">{% translate "Startup / idea" %}</th><th scope="col">{% translate "Founders" %}</th>
+    <th scope="col">{% translate "Stage" %}</th><th scope="col">{% translate "Coach" %}</th>
+    <th scope="col">{% translate "Paying customers" %}</th><th scope="col">{% translate "Validated" %}</th>
+    <th scope="col">{% translate "Last activity" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for st in page.object_list %}
+    <tr>
+      <td class="idea"><a class="strong" href="{% url 'staff:startup_detail' st.pk %}">{{ st.display_name }}</a>
+        {% for t in st.tags.all %}<span class="tag">{{ t.name }}</span>{% endfor %}
+        {% if st.archived_at %}<span class="tag">{% translate "Archived" %}</span>{% endif %}</td>
+      <td>{% for f in st.founders.all %}{{ f.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td><span class="stage-dot" style="background: {{ st.stage.colour }}" aria-hidden="true"></span>{{ st.stage.name }}</td>
+      <td>{{ st.assigned_coach.full_name|default:"–" }}</td>
+      <td>{{ st.has_paying_customers|yesno:_("Yes,No,–") }}</td>
+      <td>{{ st.idea_validated|yesno:_("Yes,No,–") }}</td>
+      <td>{{ st.last_activity_at|date:"j M Y"|default:"–" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% include "staff/_pagination.html" %}
+{% else %}
+<p class="empty">{% translate "No startups match these filters." %}{% if form.scope.value == "mine" %} <a href="?scope=all">{% translate "Show everyone" %}</a>{% endif %}</p>
+{% endif %}
+{% endblock %}

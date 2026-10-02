@@ -3,7 +3,9 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
-from crm.intake import coaches_with_caseload, domain_conflict
+from crm.intake import coaches_with_caseload, conflicting_students, domain_conflict
+from crm.models import GraduationTrack, Startup, Student, Tag
+from public.forms import RegistrationForm
 
 
 class CoachChoiceField(forms.ModelChoiceField):
@@ -109,3 +111,142 @@ class IntakeHeldForm(DomainCheckMixin, forms.Form):
         data = super().clean()
         self.check_domain("assigned_coach")
         return data
+
+
+# -- records ---------------------------------------------------------------------------
+
+YES_NO_UNKNOWN = [("", _("Unknown")), ("true", _("Yes")), ("false", _("No"))]
+
+
+class NullBooleanSelect(forms.Select):
+    def __init__(self):
+        super().__init__(choices=YES_NO_UNKNOWN)
+
+    def format_value(self, value):
+        return {True: "true", False: "false"}.get(value, "")
+
+    def value_from_datadict(self, data, files, name):
+        return {"true": True, "false": False}.get(data.get(name))
+
+
+class StudentForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = ["first_name", "last_name", "student_number", "email", "phone", "domain", "study_year"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["student_number"].help_text = _("6 digits. Optional for employees.")
+        self.fields["domain"].empty_label = None
+        self.fields["study_year"].empty_label = None
+
+    def clean_student_number(self):
+        value = self.cleaned_data["student_number"].replace(" ", "")
+        if value:
+            clash = Student.objects.current().filter(student_number=value).exclude(pk=self.instance.pk).first()
+            if clash:
+                raise forms.ValidationError(_("%(name)s already has this student number. If this is the same person, merge the two records instead.") % {"name": clash.full_name})
+        return value
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+    def clean(self):
+        data = super().clean()
+        domain = data.get("domain")
+        if domain and not domain.is_employee and not data.get("student_number") and "student_number" not in self.errors:
+            self.add_error("student_number", _("A student number is required for students (optional for employees)."))
+        return data
+
+
+class StartupForm(forms.ModelForm):
+    assigned_coach = CoachChoiceField(label=_("Coach"), required=False)
+    new_tags = forms.CharField(label=_("New tags"), required=False, help_text=_("Comma-separated, e.g. “sustainability, funding needed”."))
+    confirm_domain = forms.BooleanField(label=_("I know this coach is from a graduation-track founder's own domain, assign anyway"), required=False)
+
+    class Meta:
+        model = Startup
+        fields = ["name", "description", "goals", "stage", "assigned_coach", "has_paying_customers", "idea_validated", "kvk_number", "tags"]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 5}),
+            "goals": forms.Textarea(attrs={"rows": 4}),
+            "has_paying_customers": NullBooleanSelect(),
+            "idea_validated": NullBooleanSelect(),
+            "tags": forms.CheckboxSelectMultiple,
+        }
+
+    domain_warning = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["stage"].empty_label = None
+        self.fields["kvk_number"].help_text = _("8 digits.")
+        founders = list(self.instance.founders.select_related("study_year")) if self.instance.pk else []
+        self.founders = founders
+        field = self.fields["assigned_coach"]
+        field.label_from_instance = lambda coach: self._coach_label(coach)
+
+    def _coach_label(self, coach):
+        n = coach.active_caseload
+        label = f"{coach.full_name} · " + ngettext("%(n)d active startup", "%(n)d active startups", n) % {"n": n}
+        if conflicting_students(self.founders, coach):
+            label += " · ⚠ " + str(_("same domain as a graduation-track founder"))
+        return label
+
+    def clean_kvk_number(self):
+        value = self.cleaned_data["kvk_number"].replace(" ", "")
+        if value and not (value.isdigit() and len(value) == 8):
+            raise forms.ValidationError(_("A KvK number is 8 digits."))
+        return value
+
+    def clean(self):
+        data = super().clean()
+        coach = data.get("assigned_coach")
+        # Only warn when the coach changes; an existing assignment was already confirmed.
+        changed = coach is not None and coach.pk != self.initial.get("assigned_coach")
+        clash = conflicting_students(self.founders, coach) if changed else []
+        if clash and not data.get("confirm_domain"):
+            self.domain_warning = True
+            self.add_error("assigned_coach", _(
+                "%(coach)s is from the own domain of %(names)s, who graduates within their own company. "
+                "Choose another coach, or tick the box below to confirm."
+            ) % {"coach": coach.full_name, "names": ", ".join(s.full_name for s in clash)})
+        return data
+
+    def save(self, commit=True):
+        startup = super().save(commit)
+        names = [n.strip() for n in self.cleaned_data.get("new_tags", "").split(",") if n.strip()]
+        if names and commit:
+            for name in names:
+                tag = Tag.objects.filter(name__iexact=name).first() or Tag.objects.create(name=name[:50])
+                startup.tags.add(tag)
+        return startup
+
+
+class GraduationTrackForm(forms.ModelForm):
+    class Meta:
+        model = GraduationTrack
+        fields = ["approval", "topic", "supervisor_name", "hand_in_date"]
+        widgets = {"hand_in_date": DateInput(), "topic": forms.Textarea(attrs={"rows": 3})}
+
+
+class FounderForm(forms.Form):
+    student = forms.ModelChoiceField(label=_("Student"), queryset=Student.objects.current())
+    role = forms.CharField(label=_("Role"), max_length=100, required=False, help_text=_("e.g. Co-founder, CTO"))
+
+
+class WalkInForm(RegistrationForm):
+    """The public registration form, filled in by staff for a student who walked in."""
+
+    send_confirmation = forms.BooleanField(label=_("Email the student a confirmation with a summary"), required=False, initial=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields["website"]
+        self.fields["privacy_consent"].label = _("The student has been informed about the privacy statement and agrees to it.")
+        self.fields["privacy_consent"].error_messages["required"] = _("Please confirm that the student agrees to the privacy statement.")
+        self.fields["preferred_coach"].widget = forms.Select(choices=self.fields["preferred_coach"].choices)
+
+    @property
+    def is_spam(self):
+        return False

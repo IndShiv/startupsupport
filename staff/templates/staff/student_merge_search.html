@@ -1,0 +1,18 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Merge students" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:student_detail' target.pk %}">← {{ target.full_name }}</a></p>
+<h1>{% blocktranslate with name=target.full_name %}Find a duplicate of {{ name }}{% endblocktranslate %}</h1>
+<form method="get" class="filters"><div class="filter-row">
+  <div class="field grow"><label for="q">{% translate "Name, email, student number or phone" %}</label><input type="search" id="q" name="q" value="{{ q }}"></div>
+  <button type="submit" class="btn btn-primary">{% translate "Search" %}</button>
+</div></form>
+{% if q %}
+  <ul class="plain">
+  {% for s in results %}
+    <li>{{ s.full_name }} · {{ s.student_number|default:"–" }} · {{ s.email }} · {{ s.domain.name }} · <a href="{% url 'staff:student_merge' target.pk s.pk %}">{% translate "Compare and merge…" %}</a></li>
+  {% empty %}<li>{% translate "No other students found." %}</li>{% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Students" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{% translate "Students" %}</h1>
+  <a href="{% url 'staff:walk_in' %}" class="btn btn-secondary">+ {% translate "Add walk-in" %}</a>
+</div>
+{% translate "Name, email, student number or phone" as search_placeholder %}
+{% include "staff/_filters.html" %}
+{% include "staff/_pagination.html" %}
+{% if page.object_list %}
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Students" %}</caption>
+  <thead><tr>
+    <th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Student number" %}</th>
+    <th scope="col">{% translate "Domain" %}</th><th scope="col">{% translate "Study year" %}</th>
+    <th scope="col">{% translate "Ideas" %}</th><th scope="col">{% translate "Last registration" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for s in page.object_list %}
+    <tr>
+      <td><a class="strong" href="{% url 'staff:student_detail' s.pk %}">{{ s.full_name }}</a><span class="sub">{{ s.email }}</span>
+        {% if s.archived_at %}<span class="tag">{% translate "Archived" %}</span>{% endif %}</td>
+      <td>{{ s.student_number|default:"–" }}</td>
+      <td>{{ s.domain.name }}</td>
+      <td>{{ s.study_year.name }}{% if s.study_year.is_graduation_track %} <span class="tag tag-grad">{% translate "Graduation track" %}</span>{% endif %}</td>
+      <td>{{ s.idea_count }}</td>
+      <td>{{ s.last_registration|date:"j M Y"|default:"–" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% include "staff/_pagination.html" %}
+{% else %}
+<p class="empty">{% translate "No students match these filters." %}{% if form.scope.value == "mine" %} <a href="?scope=all">{% translate "Show everyone" %}</a>{% endif %}</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{{ s.full_name }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:student_list' %}">← {% translate "Students" %}</a></p>
+
+{% if s.merged_into %}
+  <div class="notice" role="status">{% translate "This record was merged into" %} <a href="{% url 'staff:student_detail' s.merged_into.pk %}">{{ s.merged_into.full_name }}</a>.</div>
+{% endif %}
+
+<div class="page-head">
+  <div>
+    <h1>{{ s.full_name }}</h1>
+    <p>
+      {% if s.on_graduation_track %}<span class="tag tag-grad">{% translate "Graduation track" %}</span>{% endif %}
+      {% if s.archived_at %}<span class="tag">{% translate "Archived" %}</span>{% endif %}
+    </p>
+  </div>
+  {% if not s.merged_into %}
+  <div class="actions-row">
+    <a class="btn btn-secondary" href="{% url 'staff:student_edit' s.pk %}">{% translate "Edit" %}</a>
+    <a class="btn btn-secondary" href="{% url 'staff:startup_create' %}?student={{ s.pk }}">+ {% translate "Add idea" %}</a>
+    <form method="post" action="{% url 'staff:student_archive' s.pk %}">{% csrf_token %}
+      <button type="submit" class="btn btn-secondary">{% if s.archived_at %}{% translate "Restore" %}{% else %}{% translate "Archive" %}{% endif %}</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<div class="detail-grid">
+  <section class="card" aria-labelledby="details-title">
+    <h2 id="details-title">{% translate "Details" %}</h2>
+    <dl class="facts">
+      <dt>{% translate "Student number" %}</dt><dd>{{ s.student_number|default:"–" }}</dd>
+      <dt>{% translate "Email" %}</dt><dd><a href="mailto:{{ s.email }}">{{ s.email }}</a></dd>
+      <dt>{% translate "Phone" %}</dt><dd><a href="tel:{{ s.phone }}">{{ s.phone }}</a></dd>
+      <dt>{% translate "Domain" %}</dt><dd>{{ s.domain.name }}</dd>
+      <dt>{% translate "Study year" %}</dt><dd>{{ s.study_year.name }}</dd>
+      <dt>{% translate "In the system since" %}</dt><dd>{{ s.created_at|date:"j F Y" }}</dd>
+    </dl>
+    {% if follow_ups %}
+      <h3>{% translate "Open follow-ups" %}</h3>
+      <ul class="plain">{% for f in follow_ups %}<li>{{ f.title }} · <span class="sub">{% translate "due" %} {{ f.due_date|date:"j M" }}</span></li>{% endfor %}</ul>
+    {% endif %}
+    {% if merged_from %}
+      <h3>{% translate "Merged records" %}</h3>
+      <ul class="plain">{% for m in merged_from %}<li><a href="{% url 'staff:student_detail' m.pk %}">{{ m.full_name }}</a> · {{ m.email }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if is_admin and not s.merged_into %}
+      <h3>{% translate "Duplicates" %}</h3>
+      {% if candidates %}
+        <p class="help">{% translate "These records look like the same person:" %}</p>
+        <ul class="plain">{% for c in candidates %}<li>{{ c.full_name }} · {{ c.student_number|default:"–" }} · {{ c.email }} · <a href="{% url 'staff:student_merge' s.pk c.pk %}">{% translate "Merge into this record…" %}</a></li>{% endfor %}</ul>
+      {% else %}
+        <p class="help">{% translate "No likely duplicates found." %}</p>
+      {% endif %}
+      <p><a href="{% url 'staff:student_merge_search' s.pk %}">{% translate "Find another record to merge…" %}</a></p>
+    {% endif %}
+  </section>
+
+  <div class="stack">
+    <section class="card" aria-labelledby="ideas-title">
+      <h2 id="ideas-title">{% translate "Startups & ideas" %}</h2>
+      {% for st in startups %}
+        <article class="mini">
+          <h3><a href="{% url 'staff:startup_detail' st.pk %}">{{ st.display_name }}</a></h3>
+          <p class="sub"><span class="stage-dot" style="background: {{ st.stage.colour }}" aria-hidden="true"></span>{{ st.stage.name }} · {% translate "Coach" %}: {{ st.assigned_coach.full_name|default:"–" }}
+            {% with n=st.founder_links.all|length %}{% if n > 1 %} · {% blocktranslate %}{{ n }} founders{% endblocktranslate %}{% endif %}{% endwith %}
+            {% if st.archived_at %} · {% translate "Archived" %}{% endif %}</p>
+        </article>
+      {% empty %}<p class="sub">{% translate "No ideas yet." %}</p>{% endfor %}
+    </section>
+
+    <section class="card" aria-labelledby="regs-title">
+      <h2 id="regs-title">{% translate "Registrations" %}</h2>
+      <table class="queue compact">
+        <caption class="sr-only">{% translate "Registrations" %}</caption>
+        <thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Idea" %}</th><th scope="col">{% translate "Source" %}</th><th scope="col">{% translate "Intake" %}</th></tr></thead>
+        <tbody>
+        {% for r in registrations %}
+          <tr>
+            <td><a href="{% url 'staff:intake_detail' r.pk %}">{{ r.submitted_at|date:"j M Y" }}</a></td>
+            <td>{{ r.startup.display_name }}</td>
+            <td>{{ r.get_source_display }}</td>
+            <td>{% if r.intake_held_on %}✓ {{ r.intake_held_on|date:"j M" }} · {{ r.intake_coach.full_name }}{% elif r.intake_scheduled_on %}{% translate "Scheduled" %}{% else %}{% translate "Waiting" %}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% include "staff/_history.html" %}
+  </div>
+</div>
+{% endblock %}

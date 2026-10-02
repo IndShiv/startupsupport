@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–4 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue). Records (CRUD) come next.
+**Status:** steps 1–5 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records). The pipeline board comes next.
 
 ## Stack
 
@@ -82,6 +82,18 @@ students a coach from the student's own domain needs an explicit confirmation.
 
 Deadlines skip weekends, Dutch public holidays and the closure days in *Admin → Closure days*.
 Adding or removing a closure day recalculates the deadlines of registrations still waiting.
+
+## Students and startups
+
+*Staff → Students* and *Staff → Startups* list all records with search and filters (stage, coach,
+domain, study year, graduation track, paying customers, validated idea, tags, archived). Coaches see
+their own caseload by default and can switch to *Everyone*. Records can be edited and archived; every
+change is in the audit log and shown under *Change history*. *Add walk-in* registers a student in
+person with the same questions as the public form (optionally emailing a confirmation).
+
+Admins can merge duplicate students from the student page: registrations, ideas and follow-ups move
+to the record you keep, nothing on that record is overwritten, and the duplicate is archived with a
+pointer to the kept record.
 
 ## Email
 
