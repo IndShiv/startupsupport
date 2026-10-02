@@ -2,6 +2,7 @@
 
 from django import forms
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 
 from crm.models import DESCRIPTION_MAX_WORDS, GRADUATION_TOPIC_MAX_WORDS, Coach, GraduationTrack
@@ -207,7 +208,7 @@ class RegistrationForm(forms.Form):
                 "grad_approval": str(GraduationTrack.Approval(data["grad_approval"]).label),
                 "grad_topic": data["grad_topic"],
                 "grad_supervisor": data["grad_supervisor"],
-                "grad_hand_in_date": data["grad_hand_in_date"].isoformat(),
+                "grad_hand_in_date": date_format(data["grad_hand_in_date"], "j F Y"),
             })
         result = []
         for key, title, names in SECTIONS:

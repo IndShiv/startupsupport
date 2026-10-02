@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–2 of 12 are done (data model, seed data, admin, public registration form). Emails come next.
+**Status:** steps 1–3 of 12 are done (data model, seed data, admin, public registration form, emails). The intake queue comes next.
 
 ## Stack
 
@@ -62,9 +62,41 @@ and never overwrites admin edits).
 | `POSTGRES_PASSWORD` | Used by docker-compose | `buss-dev-password` |
 | `DJANGO_TRUST_X_FORWARDED_FOR` | `1` behind a reverse proxy, so rate limiting sees the real client IP | `0` |
 | `DJANGO_MEDIA_ROOT` | Where uploaded photos are stored | `./media` |
-| `EMAIL_BACKEND`, `DEFAULT_FROM_EMAIL` | Email sending (SMTP/Graph come in step 3) | console |
+| `SITE_URL` | Public address, used for links and the logo in emails | `http://localhost:8000` |
+| `EMAIL_PROVIDER` | `console`, `smtp` or `graph` | `console` |
+| `DEFAULT_FROM_EMAIL`, `EMAIL_REPLY_TO` | Sender and reply-to address | `startupsupport@buas.nl` |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL` | SMTP settings | port 587, TLS on |
+| `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `GRAPH_SENDER` | Microsoft Graph sender | sender `startupsupport@buas.nl` |
 
 In production, run the app behind a reverse proxy that terminates HTTPS and redirects HTTP to HTTPS.
+
+## Email
+
+After each registration the app sends:
+
+1. a **confirmation** to the student, with a summary of their answers;
+2. a **notification** to BUSS staff (*Admin → App settings*: by email to the staff address, in-app, or both).
+   Returning students and graduation-track students without approval are flagged.
+
+The texts are editable under *Admin → Form content & settings → Email templates*. Placeholders such
+as `{{ first_name }}` are listed on each template; use the action **Send a test to my own email
+address** to check changes. Every email is logged under *Admin → Students & startups → Sent emails*
+(recipient, subject and status only, never the content). A failed email never blocks the
+registration, and admins can resend it from that list with the **Send again** action.
+
+**Choosing a sender** (`EMAIL_PROVIDER`):
+
+- `console` (default) prints emails to the log, which is handy locally. To see them as real emails, run
+  `docker compose --profile dev up` and open the Mailpit inbox at http://localhost:8025 (see `.env.example`).
+- `smtp`: any SMTP server, e.g. BUas's relay.
+- `graph`: Microsoft Graph, sending as the `startupsupport@buas.nl` mailbox. BUas IT needs to:
+  1. create an Entra ID app registration with the **Mail.Send** *application* permission (admin consent);
+  2. restrict it to the BUSS mailbox with an Exchange
+     [application access policy](https://learn.microsoft.com/graph/auth-limit-mailbox-access), so the
+     app cannot send as anyone else;
+  3. give you the tenant ID, client ID and a client secret for `GRAPH_*`.
+
+  The same app registration can later be reused for staff sign-in (step 11).
 
 ## Backups
 

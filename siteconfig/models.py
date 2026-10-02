@@ -1,6 +1,7 @@
 """Configuration that admins (and coaches) edit without a code change."""
 
 from auditlog.registry import auditlog
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -132,6 +133,43 @@ class Partner(models.Model):
         return self.name
 
 
+class EmailTemplate(models.Model):
+    """Editable email text. Placeholders such as {{ first_name }} are filled in when sending."""
+
+    class Key(models.TextChoices):
+        REGISTRATION_CONFIRMATION = "registration_confirmation", _("Confirmation to the student")
+        STAFF_NEW_REGISTRATION = "staff_new_registration", _("New registration, to BUSS staff")
+
+    PLACEHOLDERS = {
+        Key.REGISTRATION_CONFIRMATION: [
+            "first_name", "last_name", "intake_deadline", "approval_reminder", "answers", "contact_email",
+        ],
+        Key.STAFF_NEW_REGISTRATION: [
+            "student_name", "domain", "study_year", "submitted_at", "intake_deadline", "preferred_coach",
+            "subject_flags", "flags", "record_url", "answers",
+        ],
+    }
+
+    key = models.CharField(_("email"), max_length=50, choices=Key.choices)
+    language = models.CharField(_("language"), max_length=10, choices=settings.LANGUAGES, default="en")
+    subject = models.CharField(_("subject"), max_length=200)
+    body = models.TextField(_("text"), help_text=_("Plain text. Blank lines start a new paragraph; lines starting with '- ' become a list."))
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["key", "language"]
+        constraints = [models.UniqueConstraint(fields=["key", "language"], name="unique_email_template")]
+        verbose_name = _("email template")
+        verbose_name_plural = _("email templates")
+
+    def __str__(self):
+        return f"{self.get_key_display()} ({self.language})"
+
+    @classmethod
+    def get(cls, key, language="en"):
+        return cls.objects.filter(key=key, language=language).first() or cls.objects.filter(key=key, language="en").first()
+
+
 class AppSettings(models.Model):
     """Singleton with tunable business rules."""
 
@@ -168,5 +206,5 @@ class AppSettings(models.Model):
         return obj
 
 
-for model in (Domain, StudyYear, PipelineStage, SiteText, PrivacyStatement, ClosureDay, Partner, AppSettings):
+for model in (Domain, StudyYear, PipelineStage, SiteText, PrivacyStatement, ClosureDay, Partner, EmailTemplate, AppSettings):
     auditlog.register(model)

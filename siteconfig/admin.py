@@ -1,6 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils.html import format_html_join
+from django.utils.translation import gettext_lazy as _
 
-from .models import AppSettings, ClosureDay, Domain, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
+from .models import AppSettings, ClosureDay, Domain, EmailTemplate, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
 
 
 class OrderedOptionAdmin(admin.ModelAdmin):
@@ -59,3 +61,30 @@ class AppSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ["key", "language", "subject", "updated_at"]
+    list_filter = ["key", "language"]
+    readonly_fields = ["available_placeholders"]
+    fields = ["key", "language", "available_placeholders", "subject", "body"]
+    actions = ["send_test"]
+
+    @admin.display(description=_("Available placeholders"))
+    def available_placeholders(self, obj):
+        if not obj or not obj.key:
+            return _("Save first to see the placeholders for this email.")
+        names = EmailTemplate.PLACEHOLDERS.get(obj.key, [])
+        return format_html_join(", ", "<code>{{{{ {} }}}}</code>", ((n,) for n in names))
+
+    @admin.action(description=_("Send a test to my own email address"))
+    def send_test(self, request, queryset):
+        from crm.email_preview import send_test_email
+
+        if not request.user.email:
+            self.message_user(request, _("Your user account has no email address."), messages.ERROR)
+            return
+        for template in queryset:
+            send_test_email(template, request.user.email)
+        self.message_user(request, _("Test email(s) sent to %(email)s.") % {"email": request.user.email})

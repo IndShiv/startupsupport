@@ -15,7 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from crm.models import Coach
-from siteconfig.models import AppSettings, Domain, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
+from siteconfig.models import AppSettings, Domain, EmailTemplate, Partner, PipelineStage, PrivacyStatement, SiteText, StudyYear
 
 DOMAINS = [
     # (name, academy code, is_employee)
@@ -106,6 +106,44 @@ SITE_TEXTS = {
     ),
 }
 
+EMAIL_TEMPLATES = {
+    EmailTemplate.Key.REGISTRATION_CONFIRMATION: (
+        "We have received your registration – BUas Startup Support",
+        """Dear {{ first_name }},
+
+Thank you for registering with BUas Startup Support (BUSS)! One of our coaches will contact you within 10 working days, at the latest on {{ intake_deadline }}, to plan an intake chat. In that chat we would love to hear about your ambitions, see how we can support you, and connect you with fellow (student) entrepreneurs.
+
+{{ approval_reminder }}
+
+Below is a summary of your answers. Did something change, or do you have a question? Simply reply to this email or write to {{ contact_email }}.
+
+{{ answers }}
+
+Kind regards,
+
+BUas Startup Support""",
+    ),
+    EmailTemplate.Key.STAFF_NEW_REGISTRATION: (
+        "New BUSS registration: {{ student_name }} ({{ domain }}){{ subject_flags }}",
+        """A new registration has come in.
+
+- Student: {{ student_name }}
+- Domain: {{ domain }}
+- Study year: {{ study_year }}
+- Preferred coach: {{ preferred_coach }}
+- Registered: {{ submitted_at }}
+- Intake due by: {{ intake_deadline }}
+
+Points of attention:
+
+{{ flags }}
+
+Open the record: {{ record_url }}
+
+{{ answers }}""",
+    ),
+}
+
 PRIVACY_V1 = """DRAFT — to be reviewed by the BUas privacy officer before go-live.
 
 What we store
@@ -136,6 +174,8 @@ COACH_EDITABLE_MODELS = {
         "followup": ["view", "add", "change", "delete"],
         "tag": ["view", "add", "change"],
         "coach": ["view", "change"],
+        "outgoingemail": ["view"],
+        "notification": ["view", "change"],
     },
     # Coaches may edit form content (decision 2 Oct 2026); system settings stay admin-only.
     "siteconfig": {
@@ -146,6 +186,7 @@ COACH_EDITABLE_MODELS = {
         "privacystatement": ["view"],
         "closureday": ["view", "add", "change", "delete"],
         "partner": ["view", "add", "change"],
+        "emailtemplate": ["view", "change"],
     },
 }
 
@@ -173,6 +214,9 @@ class Command(BaseCommand):
 
         if not PrivacyStatement.objects.exists():
             PrivacyStatement.objects.create(version="1.0-draft", body=PRIVACY_V1, published_at=timezone.now())
+
+        for key, (subject, body) in EMAIL_TEMPLATES.items():
+            EmailTemplate.objects.get_or_create(key=key, language="en", defaults={"subject": subject, "body": body})
 
         AppSettings.load()
         self._seed_partners()

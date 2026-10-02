@@ -101,7 +101,12 @@ def create_registration(data, *, summary, source=Registration.Source.FORM, creat
         source=source,
         preferred_coach=data.get("preferred_coach"),
         comments=data.get("comments", ""),
-        answers={"sections": summary, "differences_from_existing_student": differences},
+        answers={
+            "sections": summary,
+            # What was typed in, which may differ from the matched student record.
+            "contact": {"first_name": data["first_name"], "last_name": data["last_name"], "email": data["email"]},
+            "differences_from_existing_student": differences,
+        },
         consent_at=submitted_at if data.get("privacy_consent") else None,
         privacy_statement=data.get("privacy_version"),
         is_duplicate_student=is_duplicate,

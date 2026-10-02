@@ -1,6 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils.translation import gettext_lazy as _
 
-from .models import Activity, Coach, Founder, FollowUp, GraduationTrack, Notification, Registration, Startup, Student, Tag
+from .emails import send_registration_email
+from .models import Activity, Coach, Founder, FollowUp, GraduationTrack, Notification, OutgoingEmail, Registration, Startup, Student, Tag
 
 
 @admin.register(Coach)
@@ -70,7 +72,31 @@ class FollowUpAdmin(admin.ModelAdmin):
     list_filter = ["assigned_to"]
 
 
+@admin.register(OutgoingEmail)
+class OutgoingEmailAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "kind", "to", "subject", "status", "attempts", "sent_at"]
+    list_filter = ["status", "kind"]
+    search_fields = ["to", "subject"]
+    readonly_fields = [f.name for f in OutgoingEmail._meta.fields]
+    actions = ["retry"]
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description=_("Send again"), permissions=["change"])
+    def retry(self, request, queryset):
+        results = [send_registration_email(e.kind, e.registration, record=e) for e in queryset if e.registration]
+        sent = sum(1 for r in results if r.status == OutgoingEmail.Status.SENT)
+        level = messages.SUCCESS if sent == len(results) else messages.WARNING
+        self.message_user(request, _("%(sent)d of %(total)d email(s) sent.") % {"sent": sent, "total": len(results)}, level)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "user", "message", "read_at"]
+    list_filter = ["user"]
+
+
 admin.site.register(Tag)
-admin.site.register(Notification)
 admin.site.site_header = "BUSS Startup Support"
 admin.site.site_title = "BUSS admin"

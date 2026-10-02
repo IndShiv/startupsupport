@@ -125,9 +125,38 @@ TRUST_X_FORWARDED_FOR = env_bool("DJANGO_TRUST_X_FORWARDED_FOR", False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/admin/login/"
 
-# Email: console locally; SMTP or Microsoft Graph configured in step 3.
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+# Absolute address of the app, used for links in emails.
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")
+
+# Email. EMAIL_PROVIDER picks the sender: console (prints to the log), smtp, or graph (Microsoft Graph).
+EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "console").lower()
+EMAIL_BACKEND = {
+    "console": "django.core.mail.backends.console.EmailBackend",
+    "smtp": "django.core.mail.backends.smtp.EmailBackend",
+    "graph": "buss.mail_graph.GraphEmailBackend",
+}.get(EMAIL_PROVIDER, EMAIL_PROVIDER)
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "BUSS Startup Support <startupsupport@buas.nl>")
+EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO", "startupsupport@buas.nl")
+EMAIL_TIMEOUT = 20
+# SMTP
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+# Microsoft Graph (app registration with the Mail.Send application permission)
+GRAPH_TENANT_ID = os.environ.get("GRAPH_TENANT_ID", "")
+GRAPH_CLIENT_ID = os.environ.get("GRAPH_CLIENT_ID", "")
+GRAPH_CLIENT_SECRET = os.environ.get("GRAPH_CLIENT_SECRET", "")
+GRAPH_SENDER = os.environ.get("GRAPH_SENDER", "startupsupport@buas.nl")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"crm": {"handlers": ["console"], "level": "INFO"}, "buss": {"handlers": ["console"], "level": "INFO"}},
+}
 
 # Production hardening (only active when DEBUG is off).
 if not DEBUG:

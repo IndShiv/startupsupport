@@ -1,7 +1,11 @@
+from functools import partial
+
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
 
+from crm import emails
 from crm.models import Registration
 from crm.services import create_registration
 from siteconfig.models import AppSettings, PrivacyStatement, SiteText
@@ -24,7 +28,10 @@ def register(request):
             return redirect("public:thanks")
         elif form.is_valid():
             ratelimit.record_hit(request)
-            result = create_registration(form.cleaned_data, summary=form.summary(), source=Registration.Source.FORM)
+            with transaction.atomic():
+                result = create_registration(form.cleaned_data, summary=form.summary(), source=Registration.Source.FORM)
+                # Emails go out only once the registration is safely stored.
+                transaction.on_commit(partial(emails.registration_submitted, result.registration.pk))
             request.session["registration_id"] = result.registration.pk
             return redirect("public:thanks")
     else:

@@ -282,6 +282,33 @@ class FollowUp(models.Model):
         return self.title
 
 
+class OutgoingEmail(models.Model):
+    """Log of emails the app sent. Only metadata is kept, never the message body."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        SENT = "sent", _("Sent")
+        FAILED = "failed", _("Failed")
+
+    kind = models.CharField(_("email"), max_length=50)
+    registration = models.ForeignKey(Registration, verbose_name=_("registration"), null=True, blank=True, on_delete=models.SET_NULL, related_name="emails")
+    to = models.CharField(_("to"), max_length=254)
+    subject = models.CharField(_("subject"), max_length=255)
+    status = models.CharField(_("status"), max_length=10, choices=Status.choices, default=Status.PENDING)
+    error = models.TextField(_("error"), blank=True)
+    attempts = models.PositiveSmallIntegerField(_("attempts"), default=0)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    sent_at = models.DateTimeField(_("sent at"), null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("sent email")
+        verbose_name_plural = _("sent emails")
+
+    def __str__(self):
+        return f"{self.subject} → {self.to}"
+
+
 class Notification(models.Model):
     """In-app notification for a staff user."""
 
