@@ -1,0 +1,33 @@
+{% load i18n static sitetext %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% translate "BUas Startup Support" %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="icon" href="{% static 'img/logo-placeholder.svg' %}" type="image/svg+xml">
+</head>
+<body class="no-js">
+  <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="{% url 'public:register' %}" class="brand">
+        <img src="{% static 'img/logo-placeholder.svg' %}" alt="" width="44" height="44">
+        <span><strong>BUas</strong> {% translate "Startup Support" %}</span>
+      </a>
+    </div>
+  </header>
+  <main id="main" class="container" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      {% if contact %}<div class="contact">{{ contact.body|plaintext_html }}</div>{% endif %}
+      <p><a href="{% url 'public:privacy' %}">{% translate "Privacy statement" %}</a> · Breda University of Applied Sciences</p>
+    </div>
+  </footer>
+  <script>document.body.classList.replace("no-js", "js");</script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

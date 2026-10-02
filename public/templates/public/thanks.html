@@ -1,0 +1,11 @@
+{% extends "base_public.html" %}
+{% load i18n sitetext %}
+{% block title %}{% translate "Thank you" %} · {% translate "BUas Startup Support" %}{% endblock %}
+{% block content %}
+<div class="thanks">
+  <div class="thanks-icon" aria-hidden="true">✓</div>
+  <h1>{{ text.title|default:_("Thank you for registering!") }}</h1>
+  {% if text %}{{ text.body|plaintext_html }}{% else %}<p>{% translate "A BUSS coach will contact you within 10 working days to plan your intake chat." %}</p>{% endif %}
+  <p><a href="{% url 'public:register' %}">{% translate "Register another idea" %}</a></p>
+</div>
+{% endblock %}

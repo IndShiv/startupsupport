@@ -1,0 +1,134 @@
+{% extends "base_public.html" %}
+{% load i18n static sitetext formhelpers %}
+
+{% block title %}{% translate "Register" %} · {% translate "BUas Startup Support" %}{% endblock %}
+
+{% block content %}
+<div class="intro">
+  <h1>{{ texts.form_intro.title|default:_("Register for BUas Startup Support") }}</h1>
+  {{ texts.form_intro.body|plaintext_html }}
+  {% if texts.minor_note %}
+    <aside class="note" aria-labelledby="minor-note-title">
+      <h2 id="minor-note-title" class="note-title">{{ texts.minor_note.title }}</h2>
+      {{ texts.minor_note.body|plaintext_html }}
+    </aside>
+  {% endif %}
+</div>
+
+{% if rate_limited %}
+  <div class="alert alert-error" role="alert">
+    {% translate "We received several registrations from your network in the last hour. Please try again later, or email us if this keeps happening." %}
+  </div>
+{% endif %}
+
+{% if form.errors and not rate_limited %}
+  <div class="alert alert-error error-summary" role="alert" tabindex="-1" id="error-summary">
+    <h2>{% blocktranslate count n=form.errors|length %}There is {{ n }} problem with your answers{% plural %}There are {{ n }} problems with your answers{% endblocktranslate %}</h2>
+    <ul>
+      {% for field in form %}{% if field.errors %}
+        <li><a href="#field-{{ field.name }}" data-goto="{{ field.name }}">{{ field.label }}: {{ field.errors|join:" " }}</a></li>
+      {% endif %}{% endfor %}
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<form method="post" action="{% url 'public:register' %}" novalidate id="registration-form"
+      data-employee-domains="{{ form.employee_domain_ids|join:' ' }}"
+      data-graduation-years="{{ form.graduation_year_ids|join:' ' }}">
+  {% csrf_token %}
+  {{ form.privacy_version }}
+
+  <nav aria-label="{% translate 'Form progress' %}" class="progress-nav">
+    <ol class="progress">
+      {% for section in form.sections %}
+        <li data-progress="{{ section.key }}"{% if section.key == "graduation" %} data-conditional{% endif %}>
+          <span class="step-dot" aria-hidden="true"></span><span class="step-label">{{ section.title }}</span>
+        </li>
+      {% endfor %}
+    </ol>
+    <p class="step-status" aria-live="polite" id="step-status"></p>
+  </nav>
+
+  {% for section in form.sections %}
+    <section class="form-section" data-section="{{ section.key }}" aria-labelledby="h-{{ section.key }}"{% if section.has_errors %} data-has-errors{% endif %}{% if section.key == "graduation" %} data-conditional{% endif %}>
+      <h2 id="h-{{ section.key }}" tabindex="-1">{{ section.title }}</h2>
+      {% if section.key == "graduation" %}<p class="no-js-only help">{% translate "Only fill in this section if you chose “Year 4 and graduating within own company”." %}</p>{% endif %}
+
+      {% if section.key == "coach" %}
+        {% with field=form.preferred_coach %}
+        <div class="field{% if field.errors %} has-error{% endif %}" id="field-preferred_coach" data-field="preferred_coach">
+          <fieldset aria-describedby="coach-note{% if field.errors %} {{ field.auto_id }}_error{% endif %}">
+            <legend>{{ field.label }} <span class="req" aria-hidden="true">*</span><span class="sr-only">({% translate "required" %})</span></legend>
+            {% if texts.coach_note %}<div class="note" id="coach-note">{{ texts.coach_note.body|plaintext_html }}</div>{% endif %}
+            {% if field.errors %}<p class="error" id="{{ field.auto_id }}_error">{{ field.errors|join:" " }}</p>{% endif %}
+            <p class="hint same-domain-hint" id="same-domain-hint" hidden>{% translate "Because you are graduating within your own company, coaches from your own domain are shown faded: you will be matched with a coach from a different domain." %}</p>
+            <div class="coach-grid">
+              {% for coach in form.coaches %}
+                <div class="coach-card" data-domains="{% for d in coach.domains.all %}{{ d.pk }} {% endfor %}">
+                  <input type="radio" name="preferred_coach" id="coach-{{ coach.pk }}" value="{{ coach.pk }}" required {% if field.value == coach.pk|stringformat:"s" %}checked{% endif %}>
+                  <label for="coach-{{ coach.pk }}">
+                    <span class="coach-photo">
+                      {% if coach.photo %}<img src="{{ coach.photo.url }}" alt="" width="80" height="80">{% else %}<span class="initials" aria-hidden="true">{{ coach.initials }}</span>{% endif %}
+                    </span>
+                    <span class="coach-body">
+                      <span class="coach-name">{{ coach.full_name }}</span>
+                      <span class="coach-domain">{% for d in coach.domains.all %}{{ d.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "All domains" %}{% endfor %}{% if coach.academy %} · {{ coach.academy }}{% endif %}</span>
+                      <span class="same-domain-badge" hidden>{% translate "Same domain as your study" %}</span>
+                    </span>
+                  </label>
+                  {% if coach.help_with or coach.background %}
+                    <details class="coach-bio">
+                      <summary>{% blocktranslate with name=coach.first_name %}More about {{ name }}{% endblocktranslate %}</summary>
+                      {% if coach.background %}{{ coach.background|plaintext_html }}{% endif %}
+                      {% if coach.help_with %}<p class="bio-heading">{% translate "I can help you with:" %}</p>{{ coach.help_with|plaintext_html }}{% endif %}
+                    </details>
+                  {% endif %}
+                </div>
+              {% endfor %}
+              <div class="coach-card coach-none">
+                <input type="radio" name="preferred_coach" id="coach-none" value="none" required {% if field.value == "none" %}checked{% endif %}>
+                <label for="coach-none">
+                  <span class="coach-photo"><span class="initials" aria-hidden="true">✓</span></span>
+                  <span class="coach-body"><span class="coach-name">{% translate "No preference, I trust you to make the best match" %}</span></span>
+                </label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+        {% endwith %}
+      {% else %}
+        {% for field in section.fields %}
+          {% include "public/_field.html" %}
+          {% if field.name == "grad_approval" %}
+            <div class="notice" id="approval-notice" role="status" {% if field.value != "not_yet" %}hidden{% endif %}>
+              <strong>{{ texts.graduation_approval_notice.title|default:_("Approval needed") }}</strong>
+              {{ texts.graduation_approval_notice.body|plaintext_html }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      {% if section.key == "finally" %}
+        <div class="hp" aria-hidden="true">
+          <label for="id_website">{{ form.website.label }}</label>
+          <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+        </div>
+      {% endif %}
+
+      <div class="step-buttons">
+        <button type="button" class="btn btn-secondary" data-prev>{% translate "Previous" %}</button>
+        <button type="button" class="btn btn-primary" data-next>{% translate "Next" %}</button>
+        {% if section.key == "finally" %}
+          <button type="submit" class="btn btn-primary" data-submit>{% translate "Submit registration" %}</button>
+        {% endif %}
+      </div>
+    </section>
+  {% endfor %}
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ js_messages|json_script:"register-messages" }}
+<script src="{% static 'js/register.js' %}" defer></script>
+{% endblock %}

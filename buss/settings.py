@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "auditlog",
     "siteconfig",
     "crm",
+    "public",
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,11 @@ STORAGES = {
         )
     },
 }
+
+# Shared cache (database table) so the form's rate limit works across worker processes.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "buss_cache"}}
+# Set to 1 only when running behind a reverse proxy that sets X-Forwarded-For.
+TRUST_X_FORWARDED_FOR = env_bool("DJANGO_TRUST_X_FORWARDED_FOR", False)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/admin/login/"

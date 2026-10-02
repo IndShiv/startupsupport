@@ -24,6 +24,8 @@ mature libraries for audit logging (`django-auditlog`), OIDC/Entra ID
 | Permissions | Coaches: view/edit all records **and** edit form content (page text, option lists, coach profiles). Admin-only: users/roles, merge, delete/anonymise, imports, system settings. |
 | Note visibility | All coaches see all notes; optional "admin only" flag per note. |
 | Retention | Default 2 years after last activity / alumni, configurable. |
+| Duplicates | Matched on student number, then email (case-insensitive), following merges and skipping anonymised records. The existing student is **not** overwritten (a mistyped number would change someone else's details); differences are stored on the registration for staff. |
+| Spam | Honeypot + per-IP rate limit (default 5/hour, configurable). The IP is only used as a hashed cache key, never stored. |
 | Startup name / KvK | Staff-only optional fields; fallback title = first words of the description. |
 | Delivery | Push each step to the branch; one PR at the end. |
 

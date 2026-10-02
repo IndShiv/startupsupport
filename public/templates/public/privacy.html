@@ -1,0 +1,14 @@
+{% extends "base_public.html" %}
+{% load i18n sitetext %}
+{% block title %}{{ title }} · {% translate "BUas Startup Support" %}{% endblock %}
+{% block content %}
+<article class="prose">
+  <h1>{{ title }}</h1>
+  {% if statement %}
+    <p class="meta">{% blocktranslate with v=statement.version d=statement.published_at|date:"j F Y" %}Version {{ v }}, published {{ d }}{% endblocktranslate %}</p>
+    {{ statement.body|plaintext_html }}
+  {% else %}
+    <p>{% translate "The privacy statement is not available yet." %}</p>
+  {% endif %}
+</article>
+{% endblock %}

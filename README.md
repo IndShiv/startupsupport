@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** step 1 of 12 is done (data model, seed data, admin). The public form comes next.
+**Status:** steps 1–2 of 12 are done (data model, seed data, admin, public registration form). Emails come next.
 
 ## Stack
 
@@ -20,11 +20,12 @@ pip install -r requirements-dev.txt
 cp .env.example .env            # optional; defaults work locally
 export DJANGO_DEBUG=1
 python manage.py migrate
+python manage.py createcachetable   # used by the form's rate limit
 python manage.py seed_demo      # reference data + fake students + dev logins
 python manage.py runserver
 ```
 
-Open http://localhost:8000/admin/ and log in as `admin` or as a coach's first name in lower case
+The registration form is at http://localhost:8000/register/. For the admin, open http://localhost:8000/admin/ and log in as `admin` or as a coach's first name in lower case
 (e.g. `shival`), using the password `buss-dev-2026`. These logins are for development only.
 
 Run the tests with `pytest`.
@@ -59,6 +60,7 @@ and never overwrites admin edits).
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | e.g. `https://buss.buas.nl` | — |
 | `DATABASE_URL` | `postgres://user:pass@host:5432/db`; empty = SQLite | SQLite |
 | `POSTGRES_PASSWORD` | Used by docker-compose | `buss-dev-password` |
+| `DJANGO_TRUST_X_FORWARDED_FOR` | `1` behind a reverse proxy, so rate limiting sees the real client IP | `0` |
 | `DJANGO_MEDIA_ROOT` | Where uploaded photos are stored | `./media` |
 | `EMAIL_BACKEND`, `DEFAULT_FROM_EMAIL` | Email sending (SMTP/Graph come in step 3) | console |
 

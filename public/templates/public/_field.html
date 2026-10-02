@@ -1,0 +1,39 @@
+{% load i18n formhelpers %}{% with wt=field.widget_type star=field.name|in_list:form.STAR_FIELDS %}
+<div class="field field-{{ wt }}{% if field.errors %} has-error{% endif %}" id="field-{{ field.name }}" data-field="{{ field.name }}">
+{% if wt == "radioselect" %}
+  <fieldset{% if field|describedby %} aria-describedby="{{ field|describedby }}"{% endif %}{% if field.errors %} aria-invalid="true"{% endif %}>
+    <legend>{{ field.label }}{% if star %} <span class="req" aria-hidden="true">*</span><span class="sr-only">({% translate "required" %})</span>{% endif %}</legend>
+    {% if field.help_text %}<p class="help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<p class="error" id="{{ field.auto_id }}_error">{{ field.errors|join:" " }}</p>{% endif %}
+    <div class="options{% if field.field.choices|length <= 2 %} options-inline{% endif %}">
+      {% for radio in field %}
+        <label class="option" for="{{ radio.id_for_label }}">{{ radio.tag }} <span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+{% elif wt == "checkbox" %}
+  {% if field.errors %}<p class="error" id="{{ field.auto_id }}_error">{{ field.errors|join:" " }}</p>{% endif %}
+  <div class="checkbox">
+    {{ field|accessible }}
+    <label for="{{ field.auto_id }}">{{ field.label }}{% if star %} <span class="req" aria-hidden="true">*</span><span class="sr-only">({% translate "required" %})</span>{% endif %}</label>
+  </div>
+  {% if field.name == "privacy_consent" %}
+    <p class="help"><a href="{% url 'public:privacy' %}" target="_blank" rel="noopener">{% translate "Read the privacy statement" %}<span class="sr-only"> ({% translate "opens in a new tab" %})</span></a>{% if form.privacy_statement %} · {% blocktranslate with v=form.privacy_statement.version %}version {{ v }}{% endblocktranslate %}{% endif %}</p>
+  {% endif %}
+{% else %}
+  <label for="{{ field.auto_id }}">{{ field.label }}{% if star %} <span class="req" aria-hidden="true">*</span><span class="sr-only">({% translate "required" %})</span>{% endif %}{% if field.name == "student_number" %}<span class="optional-note" hidden> ({% translate "optional for employees" %})</span>{% endif %}</label>
+  {% if field.help_text %}<p class="help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="error" id="{{ field.auto_id }}_error">{{ field.errors|join:" " }}</p>{% endif %}
+  {{ field|accessible }}
+  {% if field.name == "description" or field.name == "grad_topic" %}
+    <p class="counter" id="{{ field.auto_id }}_counter" data-counter-for="{{ field.auto_id }}"></p>
+  {% endif %}
+  {% if field.name == "email" %}
+    <p class="hint" id="email-hint" hidden>{% translate "Tip: please use your BUas address (…@buas.nl) if you have one, so we can reach you easily." %}</p>
+  {% endif %}
+  {% if field.name == "grad_hand_in_date" %}
+    <p class="hint" id="hand-in-hint" hidden>{% translate "That is less than 4 weeks from now. Please also email BUSS right after registering, so we can help you in time." %}</p>
+  {% endif %}
+{% endif %}
+</div>
+{% endwith %}
