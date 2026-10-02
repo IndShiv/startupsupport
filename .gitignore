@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+.env
+.pytest_cache/
+# Coach photos/bios from the internal SharePoint page: keep out of git while the repo is public.
+seed_data/private/
+.test-media/

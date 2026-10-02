@@ -1,0 +1,4 @@
+-r requirements.txt
+Faker>=30
+pytest>=8
+pytest-django>=4.9
