@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–3 of 12 are done (data model, seed data, admin, public registration form, emails). The intake queue comes next.
+**Status:** steps 1–4 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue). Records (CRUD) come next.
 
 ## Stack
 
@@ -25,7 +25,8 @@ python manage.py seed_demo      # reference data + fake students + dev logins
 python manage.py runserver
 ```
 
-The registration form is at http://localhost:8000/register/. For the admin, open http://localhost:8000/admin/ and log in as `admin` or as a coach's first name in lower case
+The registration form is at http://localhost:8000/register/ and the staff app at
+http://localhost:8000/staff/ (the configuration admin is at http://localhost:8000/admin/). Log in as `admin` or as a coach's first name in lower case
 (e.g. `shival`), using the password `buss-dev-2026`. These logins are for development only.
 
 Run the tests with `pytest`.
@@ -70,12 +71,25 @@ and never overwrites admin edits).
 
 In production, run the app behind a reverse proxy that terminates HTTPS and redirects HTTP to HTTPS.
 
+## Intake queue
+
+*Staff → Intake queue* lists registrations by working days left until the intake deadline:
+overdue rows are red, rows due within the configured number of days (default 2) are amber. The
+clock stops when a coach records that the intake has been **arranged**; the day it was **held**, who
+held it and the coach for the coaching track are recorded separately and also appear in the
+startup's activity log. Assigning a coach shows each coach's current caseload; for graduation-track
+students a coach from the student's own domain needs an explicit confirmation.
+
+Deadlines skip weekends, Dutch public holidays and the closure days in *Admin → Closure days*.
+Adding or removing a closure day recalculates the deadlines of registrations still waiting.
+
 ## Email
 
 After each registration the app sends:
 
 1. a **confirmation** to the student, with a summary of their answers;
-2. a **notification** to BUSS staff (*Admin → App settings*: by email to the staff address, in-app, or both).
+2. a **notification** to BUSS staff (*Admin → App settings*: by email to the staff address, in-app for
+   admins, or both).
    Returning students and graduation-track students without approval are flagged.
 
 The texts are editable under *Admin → Form content & settings → Email templates*. Placeholders such

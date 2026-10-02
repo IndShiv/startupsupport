@@ -98,6 +98,33 @@ GRAD_TOPICS = [
 TAGS = ["social impact", "tech", "sustainability", "funding needed", "event alumni", "international", "pitch competition"]
 
 
+def demo_answers(reg):
+    """The same structure the public form stores, so staff pages show realistic answers."""
+    s, st = reg.student, reg.startup
+    yes_no = {True: "Yes", False: "No", None: "–"}
+    sections = [
+        ["About you", [["First name", s.first_name], ["Last name", s.last_name], ["Student number", s.student_number or "–"],
+                       ["Email", s.email], ["Phone number", s.phone], ["Domain", s.domain.name], ["Study year", s.study_year.name]]],
+        ["Your business", [["Describe your business (idea)", st.description],
+                           ["Do you already have paying customers?", yes_no[st.has_paying_customers]],
+                           ["Have you validated your idea in practice with your target customers?", yes_no[st.idea_validated]],
+                           ["How can we help you? What are your goals for the coach track?", st.goals]]],
+    ]
+    track = getattr(reg, "graduation", None) if hasattr(reg, "graduation") else None
+    if track:
+        sections.append(["Graduating within your own company", [
+            ["Do you have approval from your programme to graduate with your own company?", track.get_approval_display()],
+            ["Graduation assignment topic", track.topic], ["Name of graduation supervisor", track.supervisor_name],
+            ["Intended hand-in date of final product", track.hand_in_date.strftime("%-d %B %Y")]]])
+    sections += [
+        ["Your coach", [["Preferred coach", reg.preferred_coach.full_name if reg.preferred_coach else "No preference"]]],
+        ["Finally", [["Comments / anything else we should know", reg.comments or "–"],
+                     ["I have read the privacy statement and agree that BUSS stores and uses my data as described there.", "Yes"]]],
+    ]
+    return {"sections": sections, "contact": {"first_name": s.first_name, "last_name": s.last_name, "email": s.email},
+            "differences_from_existing_student": [], "demo": True}
+
+
 class Command(BaseCommand):
     help = "Create fake demo students, startups, registrations, activities and dev logins."
 
@@ -237,7 +264,7 @@ class Command(BaseCommand):
             submitted_at=submitted,
             preferred_coach=preferred,
             comments=rng.choice(["", "", "I can only meet on Tuesdays and Thursdays.", "I am abroad for an exchange until February.", "My friend is also joining as co-founder."]),
-            answers={"note": "demo data"},
+            answers={},
             consent_at=submitted,
             privacy_statement=self.privacy,
             is_duplicate_student=duplicate,
@@ -256,6 +283,9 @@ class Command(BaseCommand):
                     student=student, startup=startup, due_date=add_working_days(submitted.date(), 5),
                     title=f"Check programme approval for {student.full_name}", auto_reason="graduation_approval_missing",
                 )
+
+        reg.answers = demo_answers(reg)
+        reg.save(update_fields=["answers"])
 
         if waiting:
             return  # Stays in the intake queue.

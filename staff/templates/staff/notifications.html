@@ -1,0 +1,26 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Notifications" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{% translate "Notifications" %}</h1>
+  {% if unread_notifications %}
+  <form method="post" action="{% url 'staff:notifications_read' %}">{% csrf_token %}
+    <button type="submit" class="btn btn-secondary">{% translate "Mark all as read" %}</button>
+  </form>
+  {% endif %}
+</div>
+{% if items %}
+<ul class="notification-list">
+  {% for item in items %}
+    <li class="{% if not item.read_at %}unread{% endif %}">
+      <a href="{% url 'staff:notification_open' item.pk %}">{{ item.message }}</a>
+      <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"j M Y, H:i" }}</time>
+      {% if not item.read_at %}<span class="sr-only">({% translate "unread" %})</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">{% translate "No notifications yet." %}</p>
+{% endif %}
+{% endblock %}

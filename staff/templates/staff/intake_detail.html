@@ -1,0 +1,115 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{{ r.student.full_name }} · {% translate "Intake" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:intake_queue' %}">← {% translate "Intake queue" %}</a></p>
+
+<div class="page-head">
+  <div>
+    <h1>{{ r.student.full_name }}</h1>
+    <p class="sub">
+      {{ r.student.domain.name }} · {{ r.student.study_year.name }}
+      {% if r.student.student_number %}· {{ r.student.student_number }}{% endif %}
+      · <a href="mailto:{{ r.student.email }}">{{ r.student.email }}</a> · {{ r.student.phone }}
+    </p>
+    <p>
+      {% if r.student.on_graduation_track %}<span class="tag tag-grad">{% translate "Graduation track" %}</span>{% endif %}
+      {% if r.graduation.approval_missing %}<span class="tag tag-warn">{% translate "Programme approval missing" %}</span>{% endif %}
+      {% if r.is_duplicate_student %}<span class="tag">{% translate "Returning student" %}</span>{% endif %}
+      <span class="tag" style="border-color: {{ r.startup.stage.colour }}">{{ r.startup.stage.name }}</span>
+    </p>
+  </div>
+  <div class="status-box">
+    {% if urgency %}
+      <span class="due due-{{ urgency.level }} big">{{ urgency.label }}</span>
+      <span class="sub">{% translate "Intake due by" %} {{ r.intake_deadline|date:"l j F" }}</span>
+    {% elif r.intake_held_on %}
+      <span class="due due-ok big">✓ {% translate "Intake held" %}</span>
+      <span class="sub">{{ r.intake_held_on|date:"j F Y" }} · {{ r.intake_coach.full_name }}</span>
+    {% elif r.intake_scheduled_on %}
+      <span class="due due-scheduled big">{% translate "Intake scheduled" %}</span>
+      <span class="sub">{% if r.intake_planned_at %}{{ r.intake_planned_at|date:"l j F, H:i" }} · {% endif %}{{ r.intake_coach.full_name }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="detail-grid">
+  <section class="card actions" aria-labelledby="actions-title">
+    <h2 id="actions-title">{% translate "Intake" %}</h2>
+
+    {% if not r.intake_held_on %}
+      <details {% if not r.intake_scheduled_on or open_form == "schedule" %}open{% endif %} class="action-panel">
+        <summary>{% if r.intake_scheduled_on %}{% translate "Change the scheduled intake" %}{% else %}{% translate "Schedule the intake" %}{% endif %}</summary>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="schedule">
+          {% for field in schedule_form %}
+            {% if field.name != "confirm_domain" or schedule_form.domain_warning %}{% include "staff/_field.html" %}{% endif %}
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+        </form>
+      </details>
+
+      <details {% if r.intake_scheduled_on or open_form == "held" %}open{% endif %} class="action-panel">
+        <summary>{% translate "Record that the intake was held" %}</summary>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="held">
+          {% for field in held_form %}
+            {% if field.name != "confirm_domain" or held_form.domain_warning %}{% include "staff/_field.html" %}{% endif %}
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+        </form>
+      </details>
+    {% else %}
+      <dl class="facts">
+        <dt>{% translate "Arranged on" %}</dt><dd>{{ r.intake_scheduled_on|date:"j F Y" }}</dd>
+        <dt>{% translate "Held on" %}</dt><dd>{{ r.intake_held_on|date:"j F Y" }}</dd>
+        <dt>{% translate "Held by" %}</dt><dd>{{ r.intake_coach.full_name|default:"–" }}</dd>
+        <dt>{% translate "Coach" %}</dt><dd>{{ r.startup.assigned_coach.full_name|default:"–" }}</dd>
+        <dt>{% translate "Within promise" %}</dt><dd>{% if r.intake_scheduled_on <= r.intake_deadline %}✓ {% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</dd>
+      </dl>
+    {% endif %}
+
+    <dl class="facts">
+      <dt>{% translate "Registered" %}</dt><dd>{{ r.submitted_at|date:"j F Y, H:i" }} ({{ r.get_source_display }})</dd>
+      <dt>{% translate "Intake deadline" %}</dt><dd>{{ r.intake_deadline|date:"l j F Y" }}</dd>
+      <dt>{% translate "Preferred coach" %}</dt><dd>{{ r.preferred_coach.full_name|default:_("No preference") }}</dd>
+      {% if r.graduation %}
+        <dt>{% translate "Hand-in date" %}</dt><dd>{{ r.graduation.hand_in_date|date:"j F Y" }}</dd>
+        <dt>{% translate "Supervisor" %}</dt><dd>{{ r.graduation.supervisor_name }}</dd>
+      {% endif %}
+      <dt>{% translate "Privacy consent" %}</dt><dd>{% if r.consent_at %}{{ r.consent_at|date:"j M Y H:i" }} · v{{ r.privacy_statement.version }}{% else %}–{% endif %}</dd>
+    </dl>
+
+    {% if follow_ups %}
+      <h3>{% translate "Open follow-ups" %}</h3>
+      <ul class="plain">{% for f in follow_ups %}<li>{{ f.title }} · <span class="sub">{% translate "due" %} {{ f.due_date|date:"j M" }}</span></li>{% endfor %}</ul>
+    {% endif %}
+    {% if other_registrations %}
+      <h3>{% translate "Earlier registrations" %}</h3>
+      <ul class="plain">{% for o in other_registrations %}<li><a href="{% url 'staff:intake_detail' o.pk %}">{{ o.submitted_at|date:"j M Y" }}</a> · {{ o.startup.display_name }}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="answers-title">
+    <h2 id="answers-title">{% translate "Answers" %}</h2>
+    {% with diffs=r.answers.differences_from_existing_student %}
+      {% if diffs %}
+        <div class="notice">
+          <strong>{% translate "This student was already known. Submitted details that differ from the record:" %}</strong>
+          <ul>{% for label, old, new in diffs %}<li>{{ label }}: {% translate "on record" %} “{{ old }}”, {% translate "submitted" %} “{{ new }}”</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% for title, rows in r.answers.sections %}
+      <h3>{{ title }}</h3>
+      <dl class="answers">
+        {% for label, value in rows %}<dt>{{ label }}</dt><dd>{{ value|linebreaksbr }}</dd>{% endfor %}
+      </dl>
+    {% empty %}
+      <p class="sub">{% translate "No answers stored for this registration." %}</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

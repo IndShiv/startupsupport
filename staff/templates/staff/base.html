@@ -1,0 +1,52 @@
+{% load i18n static %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · BUSS</title>
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/staff.css' %}">
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+</head>
+<body class="staff">
+  <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+  <header class="staff-header">
+    <div class="staff-bar">
+      <a href="{% url 'staff:home' %}" class="brand">
+        <img src="{% static 'img/buas-logo.png' %}" alt="Breda University of Applied Sciences" class="brand-logo">
+        <span class="brand-name">{% translate "Startup Support" %}</span>
+      </a>
+      {% if user.is_authenticated %}
+      <nav aria-label="{% translate 'Main' %}" class="staff-nav">
+        <ul>
+          {% url 'staff:intake_queue' as intake_url %}
+          <li><a href="{{ intake_url }}" {% if request.path|slice:":14" == "/staff/intake/" %}aria-current="page"{% endif %}>{% translate "Intake queue" %}</a></li>
+          <li><a href="{% url 'public:register' %}">{% translate "Registration form" %}</a></li>
+          <li><a href="{% url 'admin:index' %}">{% if is_admin %}{% translate "Admin" %}{% else %}{% translate "Form content" %}{% endif %}</a></li>
+        </ul>
+      </nav>
+      <div class="staff-user">
+        {% with n=unread_notifications %}
+        <a href="{% url 'staff:notifications' %}" class="bell" {% if request.path == "/staff/notifications/" %}aria-current="page"{% endif %}>
+          <span aria-hidden="true">🔔</span>
+          <span class="sr-only">{% translate "Notifications" %}</span>
+          {% if n %}<span class="badge" aria-label="{% blocktranslate count n=n %}{{ n }} unread{% plural %}{{ n }} unread{% endblocktranslate %}">{{ n }}</span>{% endif %}
+        </a>
+        {% endwith %}
+        <span class="who">{{ user.get_full_name|default:user.username }}</span>
+        <form method="post" action="{% url 'staff:logout' %}">{% csrf_token %}<button type="submit" class="link-button">{% translate "Log out" %}</button></form>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+  <main id="main" class="staff-main" tabindex="-1">
+    {% if messages %}
+      <div class="messages" role="status">
+        {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -63,3 +63,32 @@ def graduation_data(form_data):
 @pytest.fixture
 def coach(reference):
     return Coach.objects.get(first_name="Shival")
+
+
+@pytest.fixture
+def make_user(reference, django_user_model):
+    from django.contrib.auth.models import Group
+
+    def build(username, group=None, coach=None):
+        user = django_user_model.objects.create_user(username, f"{username}@example.org", "pw")
+        if group:
+            user.groups.add(Group.objects.get(name=group))
+        if coach:
+            coach.user = user
+            coach.save()
+        return user
+
+    return build
+
+
+@pytest.fixture
+def register(client, form_data):
+    """Submit the public form and return the new Registration."""
+    from crm.models import Registration
+
+    def build(**overrides):
+        response = client.post("/register/", form_data(**overrides))
+        assert response.status_code == 302, response.content.decode()[:300]
+        return Registration.objects.order_by("-pk").first()
+
+    return build

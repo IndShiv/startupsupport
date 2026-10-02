@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "siteconfig",
     "crm",
     "public",
+    "staff",
 ]
 
 MIDDLEWARE = [
@@ -71,6 +72,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "siteconfig.context_processors.public_page",
+                "staff.context_processors.staff_nav",
             ],
         },
     },
@@ -123,7 +125,9 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", 
 TRUST_X_FORWARDED_FOR = env_bool("DJANGO_TRUST_X_FORWARDED_FOR", False)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_URL = "/admin/login/"
+LOGIN_URL = "staff:login"
+LOGIN_REDIRECT_URL = "staff:home"
+LOGOUT_REDIRECT_URL = "staff:login"
 
 # Absolute address of the app, used for links in emails.
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")

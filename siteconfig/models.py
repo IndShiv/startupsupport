@@ -208,3 +208,14 @@ class AppSettings(models.Model):
 
 for model in (Domain, StudyYear, PipelineStage, SiteText, PrivacyStatement, ClosureDay, Partner, EmailTemplate, AppSettings):
     auditlog.register(model)
+
+
+def _closure_days_changed(**kwargs):
+    # Deadlines of registrations still waiting for an intake follow the new closure days.
+    from crm.intake import recompute_open_deadlines
+
+    recompute_open_deadlines()
+
+
+models.signals.post_save.connect(_closure_days_changed, sender=ClosureDay, dispatch_uid="closure_day_saved")
+models.signals.post_delete.connect(_closure_days_changed, sender=ClosureDay, dispatch_uid="closure_day_deleted")

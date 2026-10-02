@@ -66,7 +66,7 @@ def test_staff_email(client, form_data, staff, django_capture_on_commit_callback
     reg = submit(client, form_data(), django_capture_on_commit_callbacks)
     [message] = by_recipient("startupsupport@buas.nl")
     assert message.subject == "New BUSS registration: Sanne de Vries (Games)"
-    assert f"/admin/crm/registration/{reg.pk}/change/" in message.body
+    assert f"/staff/intake/{reg.pk}/" in message.body
     assert "- None" in message.body
 
 
@@ -98,7 +98,7 @@ def test_notification_mode(client, form_data, staff, django_capture_on_commit_ca
     assert bool(by_recipient("startupsupport@buas.nl")) == expect_email
     assert Notification.objects.exists() == expect_in_app
     if expect_in_app:
-        assert set(Notification.objects.values_list("user__username", flat=True)) == {"coach1", "admin1"}
+        assert set(Notification.objects.values_list("user__username", flat=True)) == {"admin1"}
     assert len(by_recipient("sanne.devries@buas.nl")) == 1  # student always gets a confirmation
 
 

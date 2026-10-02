@@ -162,8 +162,18 @@ class Founder(models.Model):
 
 
 class RegistrationQuerySet(models.QuerySet):
+    def open(self):
+        return self.filter(student__anonymised_at__isnull=True, student__archived_at__isnull=True, startup__archived_at__isnull=True)
+
     def awaiting_intake(self):
-        return self.filter(intake_scheduled_on__isnull=True, intake_held_on__isnull=True, student__anonymised_at__isnull=True)
+        """The 10-working-day clock is running: nothing scheduled or held yet."""
+        return self.open().filter(intake_scheduled_on__isnull=True, intake_held_on__isnull=True)
+
+    def intake_scheduled(self):
+        return self.open().filter(intake_scheduled_on__isnull=False, intake_held_on__isnull=True)
+
+    def intake_done(self):
+        return self.filter(intake_held_on__isnull=False)
 
 
 class Registration(models.Model):
@@ -189,6 +199,7 @@ class Registration(models.Model):
 
     intake_deadline = models.DateField(_("intake deadline"), null=True, blank=True, db_index=True)
     intake_scheduled_on = models.DateField(_("intake scheduled on"), null=True, blank=True, help_text=_("The date the intake was arranged; this stops the 10-working-day clock."))
+    intake_planned_at = models.DateTimeField(_("intake planned for"), null=True, blank=True, help_text=_("When the intake chat will take place."))
     intake_held_on = models.DateField(_("intake held on"), null=True, blank=True)
     intake_coach = models.ForeignKey(Coach, verbose_name=_("intake held by"), null=True, blank=True, on_delete=models.SET_NULL, related_name="intakes")
 

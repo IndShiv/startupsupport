@@ -25,7 +25,8 @@ from .models import Notification, OutgoingEmail, Registration
 logger = logging.getLogger(__name__)
 
 PLACEHOLDER_RE = re.compile(r"\{\{\s*(\w+)\s*\}\}")
-STAFF_GROUPS = ["Admin", "Coach"]
+# In-app notifications about new registrations go to admins only (decision 2 Oct 2026).
+NOTIFY_GROUPS = ["Admin"]
 Key = EmailTemplate.Key
 
 
@@ -157,7 +158,7 @@ def staff_flags(registration):
 
 
 def record_url(registration):
-    return settings.SITE_URL + reverse("admin:crm_registration_change", args=[registration.pk])
+    return settings.SITE_URL + reverse("staff:intake_detail", args=[registration.pk])
 
 
 def staff_context(registration):
@@ -230,8 +231,8 @@ def send_registration_email(kind, registration, record=None):
     return record
 
 
-def staff_users():
-    return User.objects.filter(is_active=True, groups__name__in=STAFF_GROUPS).distinct()
+def notification_recipients():
+    return User.objects.filter(is_active=True, groups__name__in=NOTIFY_GROUPS).distinct()
 
 
 def notify_staff_in_app(registration):
@@ -241,8 +242,8 @@ def notify_staff_in_app(registration):
         message += " · returning student"
     if _graduation_without_approval(registration):
         message += " · graduation approval missing"
-    url = reverse("admin:crm_registration_change", args=[registration.pk])
-    Notification.objects.bulk_create(Notification(user=user, message=message[:300], url=url) for user in staff_users())
+    url = reverse("staff:intake_detail", args=[registration.pk])
+    Notification.objects.bulk_create(Notification(user=user, message=message[:300], url=url) for user in notification_recipients())
 
 
 def registration_submitted(registration_id, *, confirm_to_student=True):

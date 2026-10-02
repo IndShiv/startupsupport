@@ -6,6 +6,7 @@ from django.views.static import serve
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("staff/", include("staff.urls")),
     path("", include("public.urls")),
     path("", RedirectView.as_view(pattern_name="public:register", permanent=False)),
     # Media holds only coach photos (public on the form anyway), so Django serves it directly.
