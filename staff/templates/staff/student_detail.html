@@ -4,6 +4,9 @@
 {% block content %}
 <p class="breadcrumb"><a href="{% url 'staff:student_list' %}">← {% translate "Students" %}</a></p>
 
+{% if s.anonymised_at %}
+  <div class="notice" role="status">{% blocktranslate with d=s.anonymised_at|date:"j F Y" %}This student was anonymised on {{ d }}. Only non-identifying data is kept for the statistics.{% endblocktranslate %}</div>
+{% endif %}
 {% if s.merged_into %}
   <div class="notice" role="status">{% translate "This record was merged into" %} <a href="{% url 'staff:student_detail' s.merged_into.pk %}">{{ s.merged_into.full_name }}</a>.</div>
 {% endif %}
@@ -42,7 +45,17 @@
       <h3>{% translate "Merged records" %}</h3>
       <ul class="plain">{% for m in merged_from %}<li><a href="{% url 'staff:student_detail' m.pk %}">{{ m.full_name }}</a> · {{ m.email }}</li>{% endfor %}</ul>
     {% endif %}
-    {% if is_admin and not s.merged_into %}
+    {% if is_admin and not s.anonymised_at %}
+      <h3>{% translate "Privacy (GDPR)" %}</h3>
+      <ul class="plain">
+        <li><a href="{% url 'staff:student_data_export' s.pk %}">{% translate "Download all data (JSON)" %}</a> <span class="sub">{% translate "for an access or portability request" %}</span></li>
+        {% if not s.merged_into %}
+        <li><a href="{% url 'staff:student_anonymise' s.pk %}">{% translate "Anonymise…" %}</a></li>
+        <li><a href="{% url 'staff:student_delete' s.pk %}" class="danger-link">{% translate "Delete permanently…" %}</a></li>
+        {% endif %}
+      </ul>
+    {% endif %}
+    {% if is_admin and not s.merged_into and not s.anonymised_at %}
       <h3>{% translate "Duplicates" %}</h3>
       {% if candidates %}
         <p class="help">{% translate "These records look like the same person:" %}</p>

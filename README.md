@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–11 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export, spreadsheet import, staff sign-in and roles). The GDPR tools come next.
+**Status:** steps 1–11 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export, spreadsheet import, staff sign-in and roles, GDPR tools). All 12 steps are done; see *Go-live* for what is left.
 
 ## Stack
 
@@ -216,6 +216,46 @@ pipeline and the coach caseload. The original row is kept with the registration 
 Students without a known study programme get the hidden domain "Unknown (imported)". Each row has a
 stable import key, so importing the same sheet again skips rows that are already in.
 
+## Privacy (GDPR)
+
+*Staff → Admin → Privacy (GDPR)* (admins only) and the *Privacy (GDPR)* box on a student's page:
+
+- **Download data** (right of access / portability): a JSON file with everything held about the
+  student: their details, merged duplicate records, registrations with the answers as submitted,
+  consent time and privacy-statement version, startups with the activity log, graduation track,
+  follow-ups, the email log and the change history (which fields changed, by whom, not the values).
+  Co-founders appear only as a count.
+- **Anonymise** (the default): names become "Anonymised / student #id"; student number, email, phone,
+  form answers, comments, graduation topic and supervisor are removed; follow-ups are deleted; a
+  startup only they founded is blanked and archived (its activity notes become "[removed]"); from a
+  startup shared with others they are only removed as founder. Domain, study year, stage, coach and
+  dates stay, so the dashboard figures remain correct.
+- **Delete**: removes the student and everything only they are part of. Use when anonymising is not
+  enough.
+- Both need a reason (without personal data) and a confirmation tick. They also remove the audit-log
+  history of those records (it contains old values) and the "new registration" notifications.
+- Every export, anonymisation and deletion is recorded in the *privacy action log* on that page, by
+  record number only.
+
+**Retention.** *Admin → App settings → retention period* (default 2 years). The Privacy page lists
+students with no registration, activity or change within that period (this covers alumni too: once
+a startup is closed nothing happens any more) and lets you anonymise them in one go. Run the
+housekeeping command daily, e.g. from cron:
+
+```bash
+docker compose exec -T web python manage.py retention_check
+```
+
+It reminds admins in-app when records are due (it never anonymises by itself), and deletes in-app
+notifications older than a year, email-log entries older than the retention period, and uploaded
+import files that were never imported.
+
+**Other safeguards:** consent is stored with a timestamp and the privacy-statement version; changes to
+students, registrations and startups are in the audit log (*Admin → Audit log*; student number and
+phone are masked); every export is logged; no data is sent to third-party services (no CDN, analytics
+or external CAPTCHA). Email goes only through the sender you configure (SMTP or BUas's own Microsoft
+365 tenant).
+
 ## Email
 
 After each registration the app sends:
@@ -260,6 +300,20 @@ docker run --rm -v startupsupport_media:/m -v "$PWD":/b alpine tar czf /b/media-
 
 Backups contain personal data: store them encrypted, at a BUas-approved location, and keep them
 no longer than the retention period.
+
+## Go-live
+
+What is left before real students use it (needs BUas IT or a decision by BUSS):
+
+1. **Hosting**: a BUas-approved server or cloud subscription running `docker compose` with PostgreSQL,
+   HTTPS in front, and `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `SITE_URL` set.
+2. **Entra ID app registration** for staff sign-in (see *Staff sign-in and roles*), then turn
+   `LOCAL_LOGIN_ENABLED` off.
+3. **Email sender**: SMTP relay or Graph `Mail.Send` limited to startupsupport@buas.nl.
+4. **Privacy statement**: the final text approved by BUas's privacy officer, entered under
+   *Admin → Privacy statements*; agree on the retention period.
+5. **Daily cron** for `retention_check` and the backups above.
+6. **Import** the historical sheet(s) on the production server, and point the old Microsoft Form to the new link.
 
 ## Project layout
 

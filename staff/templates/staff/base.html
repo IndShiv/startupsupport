@@ -31,10 +31,12 @@
           {% if is_admin %}
           <li>
             <details class="nav-menu">
-              <summary {% if request.path|slice:":12" == "/staff/team/" or request.path|slice:":14" == "/staff/import/" %}class="current"{% endif %}>{% translate "Admin" %}</summary>
+              <summary {% if request.path|slice:":12" == "/staff/team/" or request.path|slice:":14" == "/staff/import/" or request.path|slice:":15" == "/staff/privacy/" %}class="current"{% endif %}>{% translate "Admin" %}</summary>
               <ul>
                 <li><a href="{% url 'staff:team' %}" {% if request.path|slice:":12" == "/staff/team/" %}aria-current="page"{% endif %}>{% translate "Team & roles" %}</a></li>
                 <li><a href="{% url 'staff:import_start' %}" {% if request.path|slice:":14" == "/staff/import/" %}aria-current="page"{% endif %}>{% translate "Import" %}</a></li>
+                <li><a href="{% url 'staff:privacy' %}" {% if request.path|slice:":15" == "/staff/privacy/" %}aria-current="page"{% endif %}>{% translate "Privacy (GDPR)" %}</a></li>
+                <li><a href="{% url 'admin:auditlog_logentry_changelist' %}">{% translate "Audit log" %}</a></li>
                 <li><a href="{% url 'admin:index' %}">{% translate "Configuration" %}</a></li>
               </ul>
             </details>

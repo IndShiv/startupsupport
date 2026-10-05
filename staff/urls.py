@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_activity as activity, views_auth, views_dashboard, views_export, views_import, views_team, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_auth, views_dashboard, views_export, views_import, views_privacy, views_team, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
@@ -12,6 +12,11 @@ urlpatterns = [
     path("intake/", views.intake_queue, name="intake_queue"),
     path("intake/<int:pk>/", views.intake_detail, name="intake_detail"),
     path("export/<str:kind>.<str:file_format>", views_export.export_list, name="export"),
+    path("privacy/", views_privacy.privacy_overview, name="privacy"),
+    path("privacy/anonymise/", views_privacy.privacy_bulk_anonymise, name="privacy_bulk_anonymise"),
+    path("students/<int:pk>/privacy/export.json", views_privacy.student_data_export, name="student_data_export"),
+    path("students/<int:pk>/privacy/anonymise/", views_privacy.student_anonymise, name="student_anonymise"),
+    path("students/<int:pk>/privacy/delete/", views_privacy.student_delete, name="student_delete"),
     path("team/", views_team.team, name="team"),
     path("team/add/", views_team.team_edit, name="team_add"),
     path("team/<int:pk>/", views_team.team_edit, name="team_edit"),

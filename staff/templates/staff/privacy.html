@@ -1,0 +1,56 @@
+{% extends "staff/base.html" %}
+{% load i18n formhelpers %}
+{% block title %}{% translate "Privacy (GDPR)" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Privacy (GDPR)" %}</h1>
+<p class="help">{% translate "Requests from a student (access, correction, deletion) are handled on their student page: “Download all data”, “Edit”, “Anonymise” or “Delete permanently”. Everything done here is recorded below, without personal data." %}</p>
+
+<section class="card" aria-labelledby="due-title">
+  <h2 id="due-title">{% blocktranslate count n=due|length %}{{ n }} student past the retention period{% plural %}{{ n }} students past the retention period{% endblocktranslate %}</h2>
+  <p class="help">{% blocktranslate with y=retention_years d=cutoff|date:"j F Y" %}No registration, activity or change since {{ d }} ({{ y }} years; change this in App settings). Anonymising keeps the statistics (domain, study year, dates, stage) but removes everything that identifies the student, including the change history of their records.{% endblocktranslate %}</p>
+  {% if due %}
+  <form method="post" action="{% url 'staff:privacy_bulk_anonymise' %}">
+    {% csrf_token %}
+    <div class="table-wrap">
+    <table class="queue compact">
+      <caption class="sr-only">{% translate "Students past the retention period" %}</caption>
+      <thead><tr><th scope="col"><span class="sr-only">{% translate "Select" %}</span></th><th scope="col">{% translate "Student" %}</th><th scope="col">{% translate "Domain" %}</th><th scope="col">{% translate "Last contact" %}</th></tr></thead>
+      <tbody>
+      {% for s in due %}
+        <tr>
+          <td><input type="checkbox" name="student" value="{{ s.pk }}" id="due-{{ s.pk }}" checked></td>
+          <td><label for="due-{{ s.pk }}"><a href="{% url 'staff:student_detail' s.pk %}">{{ s.full_name }}</a></label></td>
+          <td>{{ s.domain.name }}</td>
+          <td>{{ s.last_contact|date:"j M Y" }} <span class="sub">{{ s.last_contact|timesince }} {% translate "ago" %}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-danger">{% translate "Anonymise selected students" %}</button></div>
+  </form>
+  {% else %}
+    <p class="sub">{% translate "Nothing is past the retention period." %}</p>
+  {% endif %}
+</section>
+
+{% if without_consent %}
+<section class="card" aria-labelledby="consent-title">
+  <h2 id="consent-title">{% translate "Registrations without recorded consent" %}</h2>
+  <p>{% blocktranslate count n=without_consent %}{{ n }} registration (imported or added before consent was recorded) has no privacy consent on file.{% plural %}{{ n }} registrations (imported or added before consent was recorded) have no privacy consent on file.{% endblocktranslate %}
+  {% translate "Check with the privacy officer on what basis this data may be kept, or ask these students to confirm when they next register." %}</p>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="log-title">
+  <h2 id="log-title">{% translate "Privacy actions" %}</h2>
+  {% if actions %}
+  <table class="queue compact">
+    <caption class="sr-only">{% translate "Privacy actions" %}</caption>
+    <thead><tr><th scope="col">{% translate "When" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Student ID" %}</th><th scope="col">{% translate "By" %}</th><th scope="col">{% translate "Reason" %}</th></tr></thead>
+    <tbody>{% for a in actions %}<tr><td>{{ a.performed_at|date:"j M Y H:i" }}</td><td>{{ a.get_action_display }}</td><td>#{{ a.student_ref }}</td><td>{{ a.performed_by|person }}</td><td>{{ a.reason|default:"–" }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="sub">{% translate "No privacy actions yet." %}</p>{% endif %}
+  <p><a href="{% url 'admin:auditlog_logentry_changelist' %}">{% translate "Full audit log (who changed what)" %}</a></p>
+</section>
+{% endblock %}

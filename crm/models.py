@@ -432,3 +432,27 @@ class ExportLog(models.Model):
 
     def __str__(self):
         return f"{self.kind} ({self.file_format}) · {self.row_count} rows"
+
+
+class PrivacyAction(models.Model):
+    """Accountability record of GDPR actions. Holds no personal data: only the internal student ID."""
+
+    class Action(models.TextChoices):
+        EXPORT = "export", _("Data export")
+        ANONYMISE = "anonymise", _("Anonymised")
+        DELETE = "delete", _("Deleted")
+
+    action = models.CharField(_("action"), max_length=10, choices=Action.choices)
+    student_ref = models.PositiveIntegerField(_("student ID"))
+    reason = models.CharField(_("reason"), max_length=200, blank=True, help_text=_("No personal data, e.g. “request by student” or “retention period passed”."))
+    details = models.JSONField(_("details"), default=dict, blank=True)
+    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("by"), null=True, on_delete=models.SET_NULL, related_name="+")
+    performed_at = models.DateTimeField(_("at"), auto_now_add=True)
+
+    class Meta:
+        ordering = ["-performed_at"]
+        verbose_name = _("privacy action")
+        verbose_name_plural = _("privacy actions")
+
+    def __str__(self):
+        return f"{self.get_action_display()} · student #{self.student_ref}"

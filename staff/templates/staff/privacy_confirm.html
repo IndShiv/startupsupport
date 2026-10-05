@@ -1,0 +1,39 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% if action == "anonymise" %}{% translate "Anonymise" %}{% else %}{% translate "Delete" %}{% endif %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:student_detail' s.pk %}">← {{ s.full_name }}</a></p>
+<h1>{% if action == "anonymise" %}{% blocktranslate with n=s.full_name %}Anonymise {{ n }}{% endblocktranslate %}{% else %}{% blocktranslate with n=s.full_name %}Delete {{ n }} permanently{% endblocktranslate %}{% endif %}</h1>
+
+<div class="card form-card">
+  {% if action == "anonymise" %}
+    <p>{% translate "This cannot be undone. What happens:" %}</p>
+    <ul>
+      <li>{% translate "Name, student number, email and phone are removed; the student becomes “Anonymised student #ID”." %}</li>
+      <li>{% blocktranslate count n=r.registrations|length %}{{ n }} registration: the answers and comments are removed; dates, domain and study year stay for the statistics.{% plural %}{{ n }} registrations: the answers and comments are removed; dates, domain and study year stay for the statistics.{% endblocktranslate %}</li>
+      <li>{% blocktranslate count n=r.sole_startups|length %}{{ n }} startup of only this student: name, description, KvK number and activity notes are removed, and it is archived.{% plural %}{{ n }} startups of only this student: name, description, KvK number and activity notes are removed, and they are archived.{% endblocktranslate %}</li>
+      {% if r.shared_startups %}<li>{% blocktranslate count n=r.shared_startups|length %}The student is removed as founder from {{ n }} startup shared with others; that startup and its notes stay (check the notes for references to this student).{% plural %}The student is removed as founder from {{ n }} startups shared with others; those startups and their notes stay (check the notes for references to this student).{% endblocktranslate %}</li>{% endif %}
+      <li>{% translate "Graduation details, follow-ups, email addresses in the email log, notifications and the change history of these records are removed." %}</li>
+    </ul>
+  {% else %}
+    <p>{% translate "This cannot be undone. The student, their registrations, graduation details, follow-ups, email log entries, their own startups (with activity logs) and the change history are deleted. Statistics will no longer include them. Prefer “Anonymise” unless the student asked for deletion." %}</p>
+  {% endif %}
+  {% if r.students|length > 1 %}<p>{% blocktranslate count n=r.students|length|add:"-1" %}This includes {{ n }} merged duplicate record.{% plural %}This includes {{ n }} merged duplicate records.{% endblocktranslate %}</p>{% endif %}
+  <p><a href="{% url 'staff:student_data_export' s.pk %}">{% translate "Download all data first (JSON)" %}</a></p>
+
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="field">
+      <label for="reason">{% translate "Reason" %} <span class="req" aria-hidden="true">*</span></label>
+      <p class="help" id="reason-help">{% translate "Recorded in the privacy log. No personal data, e.g. “request by student, 5 Oct 2026”." %}</p>
+      <input type="text" name="reason" id="reason" maxlength="200" required aria-describedby="reason-help" value="{{ request.POST.reason }}">
+    </div>
+    <div class="field checkbox"><input type="checkbox" name="confirm" id="confirm" value="1"><label for="confirm">{% translate "I understand this cannot be undone." %}</label></div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger">{% if action == "anonymise" %}{% translate "Anonymise" %}{% else %}{% translate "Delete permanently" %}{% endif %}</button>
+      <a href="{% url 'staff:student_detail' s.pk %}">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
