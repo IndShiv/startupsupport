@@ -1,0 +1,38 @@
+# Render Blueprint for the BUSS *test* environment (fake data only).
+# Render → New → Blueprint → pick this repository. See docs/DEPLOY-RENDER.md.
+services:
+  - type: web
+    name: buss-test
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    branch: claude/vigilant-clarke-5f8i1u
+    envVars:
+      - key: DEMO_MODE
+        value: "1"
+      - key: DEMO_PASSWORD   # the login password for testers; Render asks for it when you create the Blueprint
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: LOCAL_LOGIN_ENABLED
+        value: "1"
+      - key: DJANGO_TRUST_X_FORWARDED_FOR
+        value: "1"
+      - key: EMAIL_PROVIDER   # emails are written to the Render log, never sent
+        value: console
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: buss-test-db
+          property: connectionString
+
+databases:
+  - name: buss-test-db
+    region: frankfurt
+    plan: basic-256mb
+    databaseName: buss
+    user: buss
+    ipAllowList: []   # reachable only from Render services, not from the internet

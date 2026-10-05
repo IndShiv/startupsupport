@@ -39,6 +39,13 @@ repository is public and the material comes from the internal SharePoint page. W
 are created with their names and academies only, and admins can add photos and bios in
 *Admin → Coaches*.
 
+## Test server for colleagues (Render)
+
+[`render.yaml`](render.yaml) sets up a test environment with fake data on Render (Frankfurt).
+Step-by-step instructions: [docs/DEPLOY-RENDER.md](docs/DEPLOY-RENDER.md); a guide for testers:
+[docs/TESTING-GUIDE.md](docs/TESTING-GUIDE.md). Reset the demo data with
+`python manage.py seed_demo --reset`.
+
 ## Running with Docker
 
 ```bash
@@ -67,7 +74,9 @@ and never overwrites admin edits).
 | `ENTRA_ALLOWED_DOMAINS` | Email domains that may sign in | `buas.nl` |
 | `ENTRA_ROLE_MAP` | Entra app roles → BUSS roles; empty = roles only via the Team page | `BUSS.Admin=Admin,BUSS.Coach=Coach` |
 | `LOCAL_LOGIN_ENABLED` | Username/password sign-in (development) | on with `DJANGO_DEBUG=1`, else off |
-| `SITE_URL` | Public address, used for links and the logo in emails | `http://localhost:8000` |
+| `SITE_URL` | Public address, used for links and the logo in emails | `http://localhost:8000` (on Render: its address) |
+| `DEMO_MODE` | `1` on a test environment: banner on every page, hidden from search engines, fake data on first start | `0` |
+| `DEMO_PASSWORD` | Password of the demo logins created by `seed_demo`; required on a server | `buss-dev-2026` locally |
 | `EMAIL_PROVIDER` | `console`, `smtp` or `graph` | `console` |
 | `DEFAULT_FROM_EMAIL`, `EMAIL_REPLY_TO` | Sender and reply-to address | `startupsupport@buas.nl` |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL` | SMTP settings | port 587, TLS on |

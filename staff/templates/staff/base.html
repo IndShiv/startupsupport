@@ -7,10 +7,12 @@
   <title>{% block title %}{% endblock %} · BUSS</title>
   <link rel="stylesheet" href="{% static 'css/public.css' %}">
   <link rel="stylesheet" href="{% static 'css/staff.css' %}">
+  {% if demo_mode %}<meta name="robots" content="noindex, nofollow">{% endif %}
   <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
 </head>
 <body class="staff">
   <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+  {% include "_demo_banner.html" %}
   <header class="staff-header">
     <div class="staff-bar">
       <a href="{% url 'staff:home' %}" class="brand">

@@ -31,6 +31,14 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+# On Render the public host name is provided automatically.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+
+# Test environment: a banner on every page, hidden from search engines, demo data allowed.
+DEMO_MODE = env_bool("DEMO_MODE", False)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -58,6 +66,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
+    "buss.middleware.NoIndexMiddleware",
 ]
 
 ROOT_URLCONF = "buss.urls"
@@ -74,6 +83,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "siteconfig.context_processors.public_page",
                 "staff.context_processors.staff_nav",
+                "buss.context_processors.demo_mode",
             ],
         },
     },
@@ -163,7 +173,9 @@ SESSION_COOKIE_AGE = 60 * 60 * 9
 SESSION_COOKIE_SAMESITE = "Lax"
 
 # Absolute address of the app, used for links in emails.
-SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")
+SITE_URL = os.environ.get(
+    "SITE_URL", f"https://{RENDER_EXTERNAL_HOSTNAME}" if RENDER_EXTERNAL_HOSTNAME else "http://localhost:8000"
+).rstrip("/")
 
 # Email. EMAIL_PROVIDER picks the sender: console (prints to the log), smtp, or graph (Microsoft Graph).
 EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "console").lower()

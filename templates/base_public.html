@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% translate "BUas Startup Support" %}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  {% if demo_mode %}<meta name="robots" content="noindex, nofollow">{% endif %}
   <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
 </head>
 <body class="no-js">
   <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+  {% include "_demo_banner.html" %}
   <header class="site-header">
     <div class="container header-inner">
       <a href="{% url 'public:register' %}" class="brand">

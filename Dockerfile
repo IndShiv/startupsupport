@@ -18,4 +18,5 @@ USER buss
 
 EXPOSE 8000
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["gunicorn", "buss.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# PORT and WEB_CONCURRENCY can be set by the host (e.g. Render); the defaults suit docker compose.
+CMD ["sh", "-c", "exec gunicorn buss.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-3}"]

@@ -4,9 +4,15 @@ Covers every domain, every study year, the graduation track (with and without
 programme approval), duplicate registrations, a multi-founder startup and all
 intake states (overdue, due soon, scheduled, held). Also creates dev logins.
 
-Never run this against production: it refuses unless DJANGO_DEBUG is on or
---force is given.
+Never run this against production: it refuses unless DJANGO_DEBUG is on, DEMO_MODE is
+on (a test environment) or --force is given.
+
+The login password is DEMO_PASSWORD from the environment; locally (DEBUG) it falls back to
+the well-known development password. A public test server must set its own secret one.
+`--reset` removes all students, startups and related records first (users are kept).
 """
+
+import os
 
 import random
 from datetime import datetime, time, timedelta
@@ -19,7 +25,12 @@ from django.db import transaction
 from django.utils import timezone
 from faker import Faker
 
-from crm.models import Activity, Coach, Founder, FollowUp, GraduationTrack, Registration, Startup, Student, Tag
+from auditlog.models import LogEntry
+
+from crm.models import (
+    Activity, Coach, ExportLog, Founder, FollowUp, GraduationTrack, ImportBatch, Notification, OutgoingEmail,
+    PrivacyAction, Registration, Startup, Student, Tag,
+)
 from crm.workdays import add_working_days
 from siteconfig.models import AppSettings, Domain, PipelineStage, PrivacyStatement, StudyYear
 
@@ -129,12 +140,18 @@ class Command(BaseCommand):
     help = "Create fake demo students, startups, registrations, activities and dev logins."
 
     def add_arguments(self, parser):
-        parser.add_argument("--force", action="store_true", help="Run even when DEBUG is off.")
+        parser.add_argument("--force", action="store_true", help="Run even when DEBUG and DEMO_MODE are off.")
+        parser.add_argument("--reset", action="store_true", help="Remove all students, startups and logs first.")
         parser.add_argument("--seed", type=int, default=2026)
 
     def handle(self, *args, **options):
-        if not settings.DEBUG and not options["force"]:
-            raise CommandError("Refusing to create demo data with DEBUG off. Use --force if you are sure.")
+        if not (settings.DEBUG or settings.DEMO_MODE or options["force"]):
+            raise CommandError("Refusing to create demo data with DEBUG and DEMO_MODE off. Use --force if you are sure.")
+        self.password = os.environ.get("DEMO_PASSWORD", "") or (DEV_PASSWORD if settings.DEBUG else "")
+        if not self.password:
+            raise CommandError("Set DEMO_PASSWORD: the development password is public and must not be used on a server.")
+        if options["reset"]:
+            self._reset()
         if Student.objects.exists():
             self.stdout.write("Students already exist; demo data not added again.")
             return
@@ -147,19 +164,36 @@ class Command(BaseCommand):
             self._create_records()
         self.stdout.write(self.style.SUCCESS(
             f"Demo data created: {Student.objects.count()} students, {Startup.objects.count()} startups, "
-            f"{Registration.objects.count()} registrations. Logins: admin / coach first names, password '{DEV_PASSWORD}'."
+            f"{Registration.objects.count()} registrations. Logins: admin / coach first names"
+            + (f", password '{DEV_PASSWORD}'." if self.password == DEV_PASSWORD else ", password from DEMO_PASSWORD.")
         ))
 
+    def _reset(self):
+        with transaction.atomic():
+            for model in (OutgoingEmail, Notification, FollowUp, Activity, GraduationTrack, Registration, Founder,
+                          Startup, ExportLog, ImportBatch, PrivacyAction, LogEntry):
+                model.objects.all().delete()
+            Student.objects.update(merged_into=None)
+            Student.objects.all().delete()
+        self.stdout.write("Removed all students, startups and logs.")
+
     # -- users ------------------------------------------------------------
+    def _user(self, username, **fields):
+        """Create the login, or reset its password when it already exists (e.g. after --reset)."""
+        user, _created = User.objects.update_or_create(username=username, defaults={"is_active": True, **fields})
+        user.set_password(self.password)
+        user.save()
+        return user
+
     def _create_users(self):
         admin_group = Group.objects.get(name="Admin")
         coach_group = Group.objects.get(name="Coach")
-        admin = User.objects.create_user("admin", "admin@example.org", DEV_PASSWORD, is_staff=True, is_superuser=True, first_name="BUSS", last_name="Admin")
+        admin = self._user("admin", email="admin@example.org", is_staff=True, is_superuser=True, first_name="BUSS", last_name="Admin")
         admin.groups.add(admin_group)
         for coach in Coach.objects.all():
             username = coach.first_name.lower()
-            user = User.objects.create_user(username, f"{username}@example.org", DEV_PASSWORD, is_staff=True,
-                                            first_name=coach.first_name, last_name=coach.last_name)
+            user = self._user(username, email=f"{username}@example.org", is_staff=True,
+                              first_name=coach.first_name, last_name=coach.last_name)
             user.groups.add(coach_group)
             coach.user = user
             coach.email = user.email
