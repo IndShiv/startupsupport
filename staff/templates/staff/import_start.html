@@ -1,0 +1,34 @@
+{% extends "staff/base.html" %}
+{% load i18n formhelpers %}
+{% block title %}{% translate "Import" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Import historical registrations" %}</h1>
+<p class="help">{% translate "Upload the BUSS coach overview or a Microsoft Forms export (.xlsx). You choose the sheet, check how columns and values are mapped, and see a row-by-row preview before anything is saved. Rows that were imported before are skipped, so running an import twice is safe." %}</p>
+<form method="post" enctype="multipart/form-data" class="card form-card">
+  {% csrf_token %}
+  <div class="field">
+    <label for="file">{% translate "Excel file" %} <span class="req" aria-hidden="true">*</span></label>
+    <p class="help" id="file-help">{% translate "Max. 5 MB. The file is kept only until you have chosen a sheet; the rows are deleted once the import is done." %}</p>
+    <input type="file" name="file" id="file" accept=".xlsx" required aria-describedby="file-help">
+  </div>
+  <button type="submit" class="btn btn-primary">{% translate "Upload" %}</button>
+</form>
+
+{% if batches %}
+<h2>{% translate "Recent imports" %}</h2>
+<div class="table-wrap">
+<table class="queue compact">
+  <thead><tr><th scope="col">{% translate "When" %}</th><th scope="col">{% translate "File" %}</th><th scope="col">{% translate "Sheet" %}</th><th scope="col">{% translate "By" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Result" %}</th></tr></thead>
+  <tbody>
+  {% for b in batches %}
+    <tr>
+      <td>{{ b.created_at|date:"j M Y H:i" }}</td><td>{{ b.filename }}</td><td>{{ b.sheet|default:"–" }}</td><td>{{ b.created_by|person }}</td>
+      <td>{% if b.status == "imported" %}{% translate "Imported" %} {{ b.imported_at|date:"j M H:i" }}{% else %}<a href="{% if b.sheet %}{% url 'staff:import_map' b.pk %}{% else %}{% url 'staff:import_sheet' b.pk %}{% endif %}">{% translate "Continue" %}</a>{% endif %}</td>
+      <td>{% if b.result %}{% blocktranslate with n=b.result.new l=b.result.link s=b.result.skip e=b.result.error c=b.result.students_created %}{{ n }} new, {{ l }} linked to known students, {{ s }} skipped, {{ e }} errors · {{ c }} students created{% endblocktranslate %}{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

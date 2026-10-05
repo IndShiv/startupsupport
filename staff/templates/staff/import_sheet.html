@@ -1,0 +1,18 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Import" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:import_start' %}">← {% translate "Import" %}</a></p>
+<h1>{% translate "Step 1 of 3: choose a sheet" %}</h1>
+<p class="help">{{ batch.filename }}</p>
+<form method="post" class="card form-card">
+  {% csrf_token %}
+  <fieldset class="field"><legend>{% translate "Sheet" %}</legend>
+    <div class="options">
+      {% for name in names %}<label class="option"><input type="radio" name="sheet" value="{{ name }}" {% if forloop.first %}checked{% endif %}> {{ name }}</label>{% endfor %}
+    </div>
+  </fieldset>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">{% translate "Next" %}</button></div>
+</form>
+<form method="post" action="{% url 'staff:import_discard' batch.pk %}">{% csrf_token %}<button class="link-button" type="submit">{% translate "Discard this upload" %}</button></form>
+{% endblock %}

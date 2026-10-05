@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_activity as activity, views_dashboard, views_export, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_dashboard, views_export, views_import, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
@@ -13,6 +13,12 @@ urlpatterns = [
     path("intake/", views.intake_queue, name="intake_queue"),
     path("intake/<int:pk>/", views.intake_detail, name="intake_detail"),
     path("export/<str:kind>.<str:file_format>", views_export.export_list, name="export"),
+    path("import/", views_import.import_start, name="import_start"),
+    path("import/<int:pk>/sheet/", views_import.import_sheet, name="import_sheet"),
+    path("import/<int:pk>/map/", views_import.import_map, name="import_map"),
+    path("import/<int:pk>/preview/", views_import.import_preview, name="import_preview"),
+    path("import/<int:pk>/run/", views_import.import_run, name="import_run"),
+    path("import/<int:pk>/discard/", views_import.import_discard, name="import_discard"),
     path("students/", records.student_list, name="student_list"),
     path("students/<int:pk>/", records.student_detail, name="student_detail"),
     path("students/<int:pk>/edit/", records.student_edit, name="student_edit"),

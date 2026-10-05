@@ -1,0 +1,92 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Import" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:import_start' %}">← {% translate "Import" %}</a></p>
+<h1>{% translate "Step 2 of 3: map columns and values" %}</h1>
+<p class="help">{{ batch.filename }} · {{ batch.sheet }} · {% blocktranslate count n=batch.rows|length %}{{ n }} row{% plural %}{{ n }} rows{% endblocktranslate %}. {% translate "Suggestions are filled in; check them and change what is wrong." %}</p>
+
+<form method="post" class="import-map">
+  {% csrf_token %}
+  <section class="card">
+    <h2>{% translate "Columns" %}</h2>
+    <p class="help">{% translate "Which column in the sheet holds each piece of information? Leave “not in this file” for anything missing." %}</p>
+    <div class="map-grid">
+      {% for c in columns %}
+        <div class="field">
+          <label for="col_{{ c.target }}">{{ c.label }}</label>
+          <select name="col_{{ c.target }}" id="col_{{ c.target }}">
+            <option value="">— {% translate "not in this file" %} —</option>
+            {% for i, title in header %}<option value="{{ i }}" {% if i == c.selected %}selected{% endif %}>{{ title|truncatechars:60 }}</option>{% endfor %}
+          </select>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="field">
+      <label for="default_date">{% translate "Registration date to use when the file has none" %}</label>
+      <p class="help" id="dd-help">{% translate "Defaults to 1 September of the academic year in the sheet name. Such registrations are marked as having an estimated date and are left out of the monthly figures and the intake queue." %}</p>
+      <input type="date" name="default_date" id="default_date" value="{{ batch.mapping.default_date }}" aria-describedby="dd-help">
+    </div>
+  </section>
+
+  {% if programs %}
+  <section class="card">
+    <h2>{% translate "Study programmes → domain and study year" %}</h2>
+    <table class="queue compact"><thead><tr><th scope="col">{% translate "In the file" %}</th><th scope="col">{% translate "Rows" %}</th><th scope="col">{% translate "Domain" %}</th><th scope="col">{% translate "Study year" %}</th></tr></thead><tbody>
+    {% for i, value, choice, n in programs %}
+      <tr><td>{{ value|default:_("(empty)") }}</td><td class="num">{{ n }}</td>
+        <td><label class="sr-only" for="pd{{ i }}">{% translate "Domain for" %} {{ value }}</label><select name="program_domain_{{ i }}" id="pd{{ i }}">{% for d in domains %}<option {% if d == choice.domain %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></td>
+        <td><label class="sr-only" for="py{{ i }}">{% translate "Study year for" %} {{ value }}</label><select name="program_year_{{ i }}" id="py{{ i }}"><option value="">{% translate "from other answers / unknown" %}</option>{% for y in years %}<option {% if y == choice.year %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></td></tr>
+    {% endfor %}
+    </tbody></table>
+    <p class="help">{% blocktranslate with u=unknown_domain %}“{{ u }}” is a hidden domain for imported records; you can correct the students afterwards.{% endblocktranslate %}</p>
+  </section>
+  {% endif %}
+
+  {% if coach_values %}
+  <section class="card">
+    <h2>{% translate "Coaches" %}</h2>
+    <table class="queue compact"><thead><tr><th scope="col">{% translate "In the file" %}</th><th scope="col">{% translate "Rows" %}</th><th scope="col">{% translate "Coach" %}</th></tr></thead><tbody>
+    {% for i, value, choice, n in coach_values %}
+      <tr><td>{{ value|default:_("(empty)") }}</td><td class="num">{{ n }}</td>
+        <td><label class="sr-only" for="co{{ i }}">{% translate "Coach for" %} {{ value }}</label><select name="coach_{{ i }}" id="co{{ i }}"><option value="">— {% translate "no coach" %} —</option>{% for c in coaches %}<option value="{{ c.pk }}" {% if choice == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.full_name }}{% if not c.active %} ({% translate "inactive" %}){% endif %}</option>{% endfor %}</select></td></tr>
+    {% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+
+  {% if goc_values %}
+  <section class="card">
+    <h2>{% translate "Graduating within own company" %}</h2>
+    <table class="queue compact"><thead><tr><th scope="col">{% translate "In the file" %}</th><th scope="col">{% translate "Rows" %}</th><th scope="col">{% translate "Means" %}</th></tr></thead><tbody>
+    {% for i, value, choice, n in goc_values %}
+      <tr><td>{{ value|default:_("(empty)") }}</td><td class="num">{{ n }}</td>
+        <td><label class="sr-only" for="g{{ i }}">{% translate "Meaning of" %} {{ value }}</label><select name="goc_{{ i }}" id="g{{ i }}">
+          <option value="yes" {% if choice == "yes" %}selected{% endif %}>{% translate "Yes" %}</option>
+          <option value="no" {% if choice == "no" %}selected{% endif %}>{% translate "No" %}</option>
+          <option value="unknown" {% if choice == "unknown" %}selected{% endif %}>{% translate "Unknown" %}</option></select></td></tr>
+    {% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+
+  {% if colours %}
+  <section class="card">
+    <h2>{% translate "Colour of the name cell → stage" %}</h2>
+    <table class="queue compact"><thead><tr><th scope="col">{% translate "Colour" %}</th><th scope="col">{% translate "Rows" %}</th><th scope="col">{% translate "Stage" %}</th><th scope="col">{% translate "Tag (optional)" %}</th></tr></thead><tbody>
+    {% for i, key, c in colours %}
+      <tr><td><span class="swatch" style="background: #{{ key|slice:'2:'|default:'ffffff' }}" aria-hidden="true"></span> {{ c.label }}</td><td class="num">{{ c.count }}</td>
+        <td><label class="sr-only" for="cs{{ i }}">{% translate "Stage for" %} {{ c.label }}</label><select name="colour_stage_{{ i }}" id="cs{{ i }}">{% for s in stages %}<option {% if s.name == c.stage %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></td>
+        <td><label class="sr-only" for="ct{{ i }}">{% translate "Tag for" %} {{ c.label }}</label><input type="text" name="colour_tag_{{ i }}" id="ct{{ i }}" value="{{ c.tag }}"></td></tr>
+    {% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+
+  <div class="form-actions sticky-actions">
+    <button type="submit" name="next" value="refresh" class="btn btn-secondary">{% translate "Save and refresh lists" %}</button>
+    <button type="submit" name="next" value="preview" class="btn btn-primary">{% translate "Next: preview" %}</button>
+  </div>
+</form>
+<form method="post" action="{% url 'staff:import_discard' batch.pk %}">{% csrf_token %}<button class="link-button" type="submit">{% translate "Discard this upload" %}</button></form>
+{% endblock %}

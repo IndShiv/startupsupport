@@ -48,7 +48,7 @@ def get_period(key, today=None):
     today = today or timezone.localdate()
     key = key if key in PERIODS else DEFAULT_PERIOD
     if key == "all":
-        first = Registration.objects.order_by("submitted_at").values_list("submitted_at", flat=True).first()
+        first = _dated().order_by("submitted_at").values_list("submitted_at", flat=True).first()
         start = _month_start(timezone.localdate(first)) if first else _month_start(today)
     elif key == "ay":
         # The Dutch academic year starts on 1 September.
@@ -58,8 +58,13 @@ def get_period(key, today=None):
     return Period(key, PERIODS[key], start, today)
 
 
+def _dated():
+    """Registrations with a real date (imports without one are left out of the time-based figures)."""
+    return Registration.objects.filter(submitted_at_estimated=False)
+
+
 def _in_period(period):
-    return Registration.objects.filter(submitted_at__date__gte=period.start, submitted_at__date__lte=period.end)
+    return _dated().filter(submitted_at__date__gte=period.start, submitted_at__date__lte=period.end)
 
 
 def _next_month(day):
@@ -90,7 +95,7 @@ def registrations_per_month(period):
     """One row per month: registrations, and the intake turnaround of that month's registrations."""
     result = []
     for month in months(period):
-        month_regs = Registration.objects.filter(submitted_at__date__gte=month, submitted_at__date__lt=_next_month(month))
+        month_regs = _dated().filter(submitted_at__date__gte=month, submitted_at__date__lt=_next_month(month))
         result.append({"month": month, "count": month_regs.count(), "turnaround": turnaround(month_regs, period.end)})
     return _bars(result)
 
@@ -100,7 +105,7 @@ def kpis(period):
     settings = AppSettings.load()
     regs = _in_period(period)
     previous_start = period.start - timedelta(days=period.length_days)
-    previous = Registration.objects.filter(submitted_at__date__gte=previous_start, submitted_at__date__lt=period.start).count()
+    previous = _dated().filter(submitted_at__date__gte=previous_start, submitted_at__date__lt=period.start).count()
     waiting = Registration.objects.awaiting_intake()
     return {
         "registrations": regs.count(),
@@ -134,6 +139,7 @@ def per_domain(period):
         count=Count("students__registrations", filter=Q(
             students__registrations__submitted_at__date__gte=period.start,
             students__registrations__submitted_at__date__lte=period.end,
+            students__registrations__submitted_at_estimated=False,
         ))
     ).order_by("order")
     return _bars([{"label": d.name, "count": d.count, "pk": d.pk} for d in rows if d.active or d.count])

@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–9 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export). The Microsoft Forms import comes next.
+**Status:** steps 1–10 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export, spreadsheet import). Staff authentication (Entra ID) and roles come next.
 
 ## Stack
 
@@ -146,6 +146,28 @@ the list you are looking at (same search and filters, including "my caseload" fo
   means values starting with `=`, `+`, `-` or `@` get a leading apostrophe (e.g. phone numbers like
   `'+31 6…`); in Excel files only values starting with `=` need it.
 - Every export is logged under *Admin → Students & startups → Exports* (who, which list, filters, rows).
+
+## Importing historical data
+
+*Staff → Import* (admins only) imports the BUSS coach overview or a Microsoft Forms export (.xlsx):
+
+1. **Upload and choose a sheet** (e.g. `2026-2027`). The file is kept only until a sheet is chosen.
+2. **Map columns and values.** Suggestions are pre-filled: columns by their headers; study programmes
+   to a domain and study year (misspellings such as "Buas Emplyee" or "Data Science &AI" are
+   recognised); coach first names to coaches; yes/no answers; and the colour of the name cell
+   (green = active, orange = inactive, red = finished, blue = employee) to a pipeline stage and tag.
+3. **Preview** every row: new or linked to a known student (same student number or email), skipped
+   (imported before) or an error, with warnings such as an unknown coach, a missing student number,
+   a team of founders in one cell ("Anna Smit & Bram de Vries") or a missing hand-in date.
+4. **Import.** Nothing is saved before this step, no emails are sent and the uploaded rows are deleted
+   afterwards.
+
+Imported registrations get the default date (1 September of the sheet's academic year) unless the
+file has one; such dates are marked as estimated and left out of the monthly dashboard figures.
+They have no intake deadline, so they never appear in the intake queue, but they do count in the
+pipeline and the coach caseload. The original row is kept with the registration for reference.
+Students without a known study programme get the hidden domain "Unknown (imported)". Each row has a
+stable import key, so importing the same sheet again skips rows that are already in.
 
 ## Email
 

@@ -259,3 +259,12 @@ table.compact td, table.compact th { padding: .45rem .5rem; }
 .list-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1rem; }
 .list-bar .pagination { flex: 1; }
 .export-buttons { display: flex; align-items: center; gap: .4rem; margin-left: auto; }
+
+/* Import */
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: .25rem 1rem; }
+.import-map .card { margin-bottom: 1rem; }
+.import-map select, .import-map input[type=text], .import-map input[type=date] { font: inherit; padding: .4rem .5rem; border: 1px solid var(--border); border-radius: 6px; max-width: 100%; }
+.swatch { display: inline-block; width: 1rem; height: 1rem; border-radius: 3px; border: 1px solid var(--border); vertical-align: middle; }
+.sticky-actions { position: sticky; bottom: 0; background: var(--bg-soft); padding: .75rem 0; border-top: 1px solid var(--border-light); z-index: 5; }
+.import-preview .warnings { margin: 0; padding-left: 1rem; font-size: .85rem; color: #93370d; }
+.import-preview tr.action-skip td, .import-preview tr.action-error td { color: var(--muted); }

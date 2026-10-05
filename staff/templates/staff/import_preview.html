@@ -1,0 +1,35 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Import" %}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'staff:import_map' batch.pk %}">← {% translate "Back to mapping" %}</a></p>
+<h1>{% translate "Step 3 of 3: preview" %}</h1>
+<p>{% blocktranslate with n=counts.new l=counts.link s=counts.skip e=counts.error p=people %}<strong>{{ n }}</strong> new, <strong>{{ l }}</strong> linked to a student already in the app, <strong>{{ s }}</strong> skipped (imported before), <strong>{{ e }}</strong> with errors · {{ p }} people in total.{% endblocktranslate %}</p>
+<p class="help">{% translate "Nothing has been saved yet. Imported records get no intake deadline (they are not put in the intake queue) and no emails are sent." %}</p>
+
+<div class="table-wrap">
+<table class="queue compact import-preview">
+  <caption class="sr-only">{% translate "Rows to import" %}</caption>
+  <thead><tr><th scope="col">{% translate "Row" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "People" %}</th><th scope="col">{% translate "Domain · year" %}</th><th scope="col">{% translate "Coach · stage" %}</th><th scope="col">{% translate "Startup" %}</th><th scope="col">{% translate "Check" %}</th></tr></thead>
+  <tbody>
+  {% for p in plan %}
+    <tr class="action-{{ p.action }}">
+      <td class="num">{{ p.row }}</td>
+      <td><span class="tag {% if p.action == 'error' %}tag-warn{% elif p.action == 'link' %}tag-grad{% endif %}">{% if p.action == "new" %}{% translate "New" %}{% elif p.action == "link" %}{% translate "Link" %}{% elif p.action == "skip" %}{% translate "Skip" %}{% else %}{% translate "Error" %}{% endif %}</span></td>
+      <td>{% for person in p.people %}<div>{{ person.first_name }} <strong>{{ person.last_name }}</strong>{% if person.student_number %} <span class="sub">{{ person.student_number }}</span>{% endif %}{% if person.existing %} <span class="sub">→ {% translate "existing" %}: <a href="{% url 'staff:student_detail' person.existing.pk %}">{{ person.existing.full_name }}</a></span>{% endif %}</div>{% endfor %}</td>
+      <td>{{ p.domain }}<span class="sub">{{ p.year }}</span></td>
+      <td>{{ p.coach.full_name|default:"–" }}<span class="sub">{{ p.stage }}{% for t in p.tags %} · {{ t }}{% endfor %}</span></td>
+      <td>{{ p.company_name|default:"" }}<span class="sub">{{ p.description|truncatewords:12 }}</span>{% if p.goc == "yes" %}<span class="tag tag-grad">{% translate "Graduation" %}{% if p.hand_in %} · {{ p.hand_in|date:"j M Y" }}{% endif %}</span>{% endif %}</td>
+      <td>{% if p.warnings %}<ul class="warnings">{% for w in p.warnings %}<li>{{ w }}</li>{% endfor %}</ul>{% else %}<span class="ok">✓</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<form method="post" action="{% url 'staff:import_run' batch.pk %}" class="form-actions sticky-actions">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-primary" {% if not to_import %}disabled{% endif %}>{% blocktranslate count n=to_import %}Import {{ n }} row{% plural %}Import {{ n }} rows{% endblocktranslate %}</button>
+  <a href="{% url 'staff:import_map' batch.pk %}">{% translate "Change mapping" %}</a>
+</form>
+{% endblock %}

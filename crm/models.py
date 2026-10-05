@@ -66,8 +66,9 @@ class Student(TimeStamped):
     first_name = models.CharField(_("first name"), max_length=100)
     last_name = models.CharField(_("last name"), max_length=100)
     student_number = models.CharField(_("student number"), max_length=6, blank=True, db_index=True, validators=[validate_student_number])
-    email = models.EmailField(_("email"), db_index=True)
-    phone = models.CharField(_("phone number"), max_length=20, validators=[validate_phone])
+    # Required on the registration form; may be empty for records imported from old spreadsheets.
+    email = models.EmailField(_("email"), db_index=True, blank=True)
+    phone = models.CharField(_("phone number"), max_length=20, blank=True, validators=[validate_phone])
     domain = models.ForeignKey(Domain, verbose_name=_("domain"), on_delete=models.PROTECT, related_name="students")
     study_year = models.ForeignKey(StudyYear, verbose_name=_("study year"), on_delete=models.PROTECT, related_name="students")
     archived_at = models.DateTimeField(_("archived at"), null=True, blank=True)
@@ -166,8 +167,11 @@ class RegistrationQuerySet(models.QuerySet):
         return self.filter(student__anonymised_at__isnull=True, student__archived_at__isnull=True, startup__archived_at__isnull=True)
 
     def awaiting_intake(self):
-        """The 10-working-day clock is running: nothing scheduled or held yet."""
-        return self.open().filter(intake_scheduled_on__isnull=True, intake_held_on__isnull=True)
+        """The 10-working-day clock is running: nothing scheduled or held yet.
+
+        Imported historical registrations have no deadline and never enter the queue.
+        """
+        return self.open().filter(intake_deadline__isnull=False, intake_scheduled_on__isnull=True, intake_held_on__isnull=True)
 
     def intake_scheduled(self):
         return self.open().filter(intake_scheduled_on__isnull=False, intake_held_on__isnull=True)
@@ -193,7 +197,14 @@ class Registration(models.Model):
     answers = models.JSONField(_("answers as submitted"), default=dict, blank=True)
     consent_at = models.DateTimeField(_("privacy consent given at"), null=True, blank=True)
     privacy_statement = models.ForeignKey(PrivacyStatement, verbose_name=_("privacy statement version"), null=True, blank=True, on_delete=models.PROTECT)
-    forms_response_id = models.CharField(_("Microsoft Forms response ID"), max_length=50, null=True, blank=True, unique=True)
+    forms_response_id = models.CharField(
+        _("import reference"), max_length=120, null=True, blank=True, unique=True,
+        help_text=_("Microsoft Forms response ID or spreadsheet row key; prevents importing the same row twice."),
+    )
+    submitted_at_estimated = models.BooleanField(
+        _("registration date estimated"), default=False,
+        help_text=_("Imported without a real registration date; left out of the monthly figures."),
+    )
     is_duplicate_student = models.BooleanField(_("matched an existing student"), default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("created by"), null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
@@ -374,6 +385,34 @@ auditlog.register(Registration, exclude_fields=["answers"])
 auditlog.register(GraduationTrack)
 auditlog.register(Activity)
 auditlog.register(FollowUp)
+
+
+class ImportBatch(models.Model):
+    """An uploaded spreadsheet being imported. Row data is deleted once the import is done."""
+
+    class Status(models.TextChoices):
+        UPLOADED = "uploaded", _("Uploaded")
+        IMPORTED = "imported", _("Imported")
+
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    filename = models.CharField(max_length=200)
+    file_data = models.BinaryField(null=True, blank=True, help_text="The uploaded file, kept only until a sheet is chosen.")
+    sheet = models.CharField(max_length=100, blank=True)
+    header = models.JSONField(default=list)
+    rows = models.JSONField(default=list, help_text="Parsed rows; cleared after import (personal data).")
+    mapping = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.UPLOADED)
+    result = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    imported_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("import")
+        verbose_name_plural = _("imports")
+
+    def __str__(self):
+        return f"{self.filename} – {self.sheet}"
 
 
 class ExportLog(models.Model):
