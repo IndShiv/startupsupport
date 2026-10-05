@@ -39,7 +39,7 @@ def _mine_filter(user):
 
 @staff_required
 def home(request):
-    return redirect("staff:intake_queue")
+    return redirect("staff:dashboard")
 
 
 @staff_required

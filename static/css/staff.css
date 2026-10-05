@@ -201,3 +201,56 @@ table.compact td, table.compact th { padding: .45rem .5rem; }
 .staff-nav a[aria-current="page"] .nav-badge { background: #fff; color: var(--error); }
 .danger-zone { max-width: 48rem; margin-top: .5rem; }
 .btn-danger { background: #fff; color: var(--error); border-color: var(--error); }
+
+/* Dashboard. Single-series charts in one hue (#1f6fa8, validated: contrast >= 3:1, in band);
+   closed/context marks in a de-emphasis grey. Text always uses text colours, never the bar colour. */
+.staff { --viz-mark: #1f6fa8; --viz-mark-hover: #2a85c4; --viz-muted: #8a8f98; --viz-grid: #e5e7eb;
+  --status-good: #067647; --status-warning: #dc6803; --status-critical: #b42318; }
+.dash-filter .filter-row { align-items: center; }
+.dash-filter .help { margin: 0; flex: 1 1 20rem; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.stat { background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius); padding: 1rem 1.25rem; color: var(--text); text-decoration: none; display: block; }
+.stat-link:hover { border-color: var(--brand-navy); color: var(--text); }
+.stat p { margin: 0; }
+.stat-label { color: var(--muted); font-size: .9rem; }
+.stat-value { font-size: 2.2rem; font-weight: 650; line-height: 1.2; color: var(--text); }
+.stat-delta { font-size: .88rem; color: var(--muted); margin-top: .25rem !important; }
+.meter { height: .5rem; border-radius: 999px; background: #dbe8f3; overflow: hidden; margin: .35rem 0 .15rem; }
+.meter span { display: block; height: 100%; border-radius: 999px; background: var(--viz-mark); }
+.meter-warning { background: #fdecd8; } .meter-warning span { background: var(--status-warning); }
+.meter-critical { background: #fbe0de; } .meter-critical span { background: var(--status-critical); }
+.status-dot { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .2rem; vertical-align: baseline; }
+.status-good { background: var(--status-good); } .status-warning { background: var(--status-warning); } .status-critical { background: var(--status-critical); }
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.25rem; align-items: start; }
+.span-2 { grid-column: span 2; }
+.span-all { grid-column: 1 / -1; }
+@media (max-width: 50rem) { .span-2 { grid-column: auto; } }
+.count-pill { display: inline-block; font-size: .8rem; background: var(--bg-soft); border: 1px solid var(--border-light); border-radius: 999px; padding: 0 .5rem; color: var(--muted); vertical-align: middle; }
+
+/* Column chart */
+.columns-chart { display: flex; align-items: flex-end; gap: .5rem; height: 13rem; padding: 1.5rem .25rem 0; border-bottom: 1px solid var(--viz-grid); }
+.columns-chart .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; cursor: default; outline-offset: 2px; }
+.col-bar { width: 100%; max-width: 24px; min-height: 2px; background: var(--viz-mark); border-radius: 4px 4px 0 0; }
+.col.is-hover .col-bar { background: var(--viz-mark-hover); }
+.col-value { font-size: .8rem; font-weight: 600; color: var(--text); min-height: 1.1rem; font-variant-numeric: tabular-nums; }
+.col-label { position: absolute; top: 100%; margin-top: .3rem; font-size: .75rem; color: var(--muted); text-align: center; line-height: 1.2; }
+.chart-card .columns-chart { margin-bottom: 2.6rem; }
+
+/* Horizontal bars */
+.hbars { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .35rem; }
+.hbars li { display: grid; grid-template-columns: minmax(7rem, 11rem) 1fr; align-items: center; gap: .6rem; padding: .1rem 0; outline-offset: 2px; border-radius: 4px; }
+.hbar-label { font-size: .88rem; color: var(--text); overflow-wrap: anywhere; }
+.hbar-track { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.hbar { height: 14px; min-width: 2px; background: var(--viz-mark); border-radius: 0 4px 4px 0; }
+.hbar-muted { background: var(--viz-muted); }
+.hbars li.is-hover .hbar { background: var(--viz-mark-hover); }
+.hbars li.is-hover .hbar-muted { background: #6b7280; }
+.hbar-value { font-size: .85rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.viz-tooltip { position: absolute; z-index: 20; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.12); padding: .45rem .7rem; font-size: .85rem; display: grid; gap: .05rem; pointer-events: none; }
+.viz-tooltip strong { font-size: 1rem; color: var(--text); }
+.viz-tooltip span { color: var(--muted); }
+.table-view { margin-top: .5rem; }
+.table-view summary { cursor: pointer; color: var(--brand-navy); font-weight: 600; font-size: .9rem; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.grad-list li { margin: .25rem 0; }

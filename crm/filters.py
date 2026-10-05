@@ -1,10 +1,13 @@
 """Search and filters for the student and startup lists (also used by the export)."""
 
+from datetime import timedelta
+
 from django import forms
+from django.utils import timezone
 from django.db.models import Exists, OuterRef, Q
 from django.utils.translation import gettext_lazy as _
 
-from siteconfig.models import Domain, PipelineStage, StudyYear
+from siteconfig.models import AppSettings, Domain, PipelineStage, StudyYear
 
 from .models import Coach, GraduationTrack, Startup, Student, Tag
 
@@ -99,6 +102,7 @@ class StartupFilterForm(BaseFilterForm):
     paying = forms.ChoiceField(label=_("Paying customers"), choices=YES_NO_ANY, required=False)
     validated = forms.ChoiceField(label=_("Idea validated"), choices=YES_NO_ANY, required=False)
     tags = forms.ModelMultipleChoiceField(label=_("Tags"), queryset=Tag.objects.all(), required=False, widget=forms.CheckboxSelectMultiple)
+    quiet = forms.BooleanField(label=_("No recent activity"), required=False, help_text=_("Active startups without activity for the number of weeks set in App settings."))
 
     def filter(self, qs=None):
         qs = Startup.objects.all() if qs is None else qs
@@ -134,4 +138,8 @@ class StartupFilterForm(BaseFilterForm):
         qs = _bool_filter(qs, "idea_validated", d["validated"])
         for tag in d["tags"]:
             qs = qs.filter(tags=tag)  # all selected tags must be present
+        if d["quiet"]:
+            cutoff = timezone.now() - timedelta(weeks=AppSettings.load().inactivity_weeks)
+            # Closed stages (alumni, stopped) are quiet by nature, so they don't count here.
+            qs = qs.filter(stage__is_closed=False).filter(Q(last_activity_at__lt=cutoff) | Q(last_activity_at__isnull=True, created_at__lt=cutoff))
         return qs.distinct()

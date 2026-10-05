@@ -1,0 +1,9 @@
+{% load i18n %}
+{% if tracks %}
+<ul class="plain grad-list">
+  {% for t in tracks %}
+    <li><a href="{% url 'staff:startup_detail' t.startup_id %}">{{ t.student.full_name }}</a>
+      <span class="sub">{% translate "hand-in" %} {{ t.hand_in_date|date:"j M Y" }} · {% translate "coach" %}: {{ t.startup.assigned_coach.full_name|default:"–" }}{% if t.approval_missing %} · {% translate "approval missing" %}{% endif %}</span></li>
+  {% endfor %}
+</ul>
+{% else %}<p class="sub">{% translate "None." %}</p>{% endif %}

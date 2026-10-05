@@ -1,0 +1,130 @@
+{% extends "staff/base.html" %}
+{% load i18n static formhelpers %}
+{% block title %}{% translate "Dashboard" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{% translate "Dashboard" %}</h1>
+</div>
+
+{# One filter row above everything it scopes. #}
+<form method="get" class="filters dash-filter">
+  <div class="filter-row">
+    <div class="field">
+      <label for="period">{% translate "Period" %}</label>
+      <select name="period" id="period" data-autosubmit>
+        {% for key, label in periods.items %}<option value="{{ key }}" {% if key == period.key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary js-hide">{% translate "Show" %}</button>
+    <p class="help">{% blocktranslate with s=period.start|date:"j M Y" e=period.end|date:"j M Y" %}{{ s }} – {{ e }}. Applies to registrations, intake turnaround and domains. Sections marked “now” show the current situation.{% endblocktranslate %}</p>
+  </div>
+</form>
+
+<section class="kpis" aria-label="{% translate 'Key figures' %}">
+  <div class="stat">
+    <p class="stat-label">{% translate "Registrations" %}</p>
+    <p class="stat-value">{{ kpi.registrations }}</p>
+    {% if kpi.registrations_previous is not None %}
+      <p class="stat-delta">{% blocktranslate with prev=kpi.registrations_previous %}{{ prev }} in the previous period{% endblocktranslate %}</p>
+    {% endif %}
+  </div>
+  <div class="stat">
+    <p class="stat-label">{% blocktranslate with n=kpi.intake_days %}Intake within {{ n }} working days{% endblocktranslate %}</p>
+    {% if kpi.turnaround.pct is not None %}
+      <p class="stat-value">{{ kpi.turnaround.pct }}%</p>
+      <div class="meter meter-{{ kpi.turnaround_level }}" role="img" aria-label="{% blocktranslate with p=kpi.turnaround.pct %}{{ p }} percent on time{% endblocktranslate %}"><span style="width: {{ kpi.turnaround.pct }}%"></span></div>
+      <p class="stat-delta">
+        <span class="status-dot status-{{ kpi.turnaround_level }}" aria-hidden="true"></span>
+        {% if kpi.turnaround_level == "good" %}{% translate "On track" %}{% elif kpi.turnaround_level == "warning" %}{% translate "Needs attention" %}{% else %}{% translate "Promise often missed" %}{% endif %}
+        · {% blocktranslate with on=kpi.turnaround.on_time total=kpi.turnaround.total %}{{ on }} of {{ total }} on time{% endblocktranslate %}
+      </p>
+    {% else %}
+      <p class="stat-value">–</p><p class="stat-delta">{% translate "No intakes due yet in this period" %}</p>
+    {% endif %}
+  </div>
+  <a class="stat stat-link" href="{% url 'staff:intake_queue' %}">
+    <p class="stat-label">{% translate "Waiting for intake (now)" %}</p>
+    <p class="stat-value">{{ kpi.waiting }}</p>
+    <p class="stat-delta">{% if kpi.overdue %}<span class="status-dot status-critical" aria-hidden="true"></span>{% blocktranslate count n=kpi.overdue %}{{ n }} overdue{% plural %}{{ n }} overdue{% endblocktranslate %}{% else %}{% translate "None overdue" %}{% endif %}</p>
+  </a>
+  <a class="stat stat-link" href="{% url 'staff:pipeline' %}?scope=all">
+    <p class="stat-label">{% translate "Active startups (now)" %}</p>
+    <p class="stat-value">{{ kpi.active_startups }}</p>
+    <p class="stat-delta">{% translate "Not archived, not in a closed stage" %}</p>
+  </a>
+</section>
+
+<div class="dash-grid">
+  <section class="card chart-card span-2" aria-labelledby="monthly-title">
+    <h2 id="monthly-title">{% translate "Registrations per month" %}</h2>
+    <div class="columns-chart" role="list">
+      {% for m in monthly %}
+        <div class="col" role="listitem" tabindex="0"
+             data-tip-value="{{ m.count }}" data-tip-label="{{ m.month|date:'F Y' }}"
+             data-tip-extra="{% if m.turnaround.pct is not None %}{% blocktranslate with p=m.turnaround.pct %}{{ p }}% intakes on time{% endblocktranslate %}{% endif %}"
+             aria-label="{{ m.month|date:'F Y' }}: {{ m.count }}">
+          <span class="col-value">{% if m.labelled %}{{ m.count }}{% endif %}</span>
+          <span class="col-bar" style="height: {{ m.pct_of_max }}%"></span>
+          <span class="col-label">{{ m.month|date:"M" }}{% if m.month.month == 1 or forloop.first %}<br><span class="sub">{{ m.month|date:"Y" }}</span>{% endif %}</span>
+        </div>
+      {% endfor %}
+    </div>
+    <details class="table-view">
+      <summary>{% translate "Show as table" %}</summary>
+      <table class="queue compact">
+        <thead><tr><th scope="col">{% translate "Month" %}</th><th scope="col" class="num">{% translate "Registrations" %}</th><th scope="col" class="num">{% translate "Intakes on time" %}</th></tr></thead>
+        <tbody>{% for m in monthly %}<tr><td>{{ m.month|date:"F Y" }}</td><td class="num">{{ m.count }}</td>
+          <td class="num">{% if m.turnaround.pct is not None %}{{ m.turnaround.pct }}% ({{ m.turnaround.on_time }}/{{ m.turnaround.total }}){% else %}–{% endif %}</td></tr>{% endfor %}</tbody>
+      </table>
+    </details>
+  </section>
+
+  {% include "staff/_hbars.html" with title=_("Startups per stage (now)") items=stages id="stages" note=_("Grey bars are closed stages.") %}
+  {% include "staff/_hbars.html" with title=_("Registrations per domain") items=domains id="domains" %}
+  {% include "staff/_hbars.html" with title=_("Caseload per coach (now)") items=caseload id="caseload" note=_("Active startups per coach.") %}
+
+  <section class="card" aria-labelledby="grad-title">
+    <h2 id="grad-title">{% translate "Graduation track (now)" %}</h2>
+    <h3>{% translate "Programme approval missing" %} <span class="count-pill">{{ graduation.approval_missing|length }}</span></h3>
+    {% include "staff/_grad_list.html" with tracks=graduation.approval_missing %}
+    <h3>{% blocktranslate with n=graduation.window_weeks %}Hand-in within {{ n }} weeks{% endblocktranslate %} <span class="count-pill">{{ graduation.upcoming|length }}</span></h3>
+    {% include "staff/_grad_list.html" with tracks=graduation.upcoming %}
+    {% if graduation.overdue_hand_in %}
+      <h3>{% translate "Hand-in date passed" %} <span class="count-pill">{{ graduation.overdue_hand_in|length }}</span></h3>
+      {% include "staff/_grad_list.html" with tracks=graduation.overdue_hand_in %}
+    {% endif %}
+  </section>
+
+  <section class="card span-all" aria-labelledby="inactive-title">
+    <h2 id="inactive-title">{% blocktranslate with n=inactive.weeks %}No activity for {{ n }}+ weeks (now){% endblocktranslate %} <span class="count-pill">{{ inactive.count }}</span></h2>
+    <p class="help">{% translate "Active startups without a note, meeting, email, event or referral in that time. Change the number of weeks in Admin → App settings." %}</p>
+    {% if inactive.startups %}
+    <div class="table-wrap">
+    <table class="queue compact">
+      <caption class="sr-only">{% translate "Inactive startups" %}</caption>
+      <thead><tr><th scope="col">{% translate "Startup" %}</th><th scope="col">{% translate "Founders" %}</th><th scope="col">{% translate "Stage" %}</th><th scope="col">{% translate "Coach" %}</th><th scope="col">{% translate "Last activity" %}</th></tr></thead>
+      <tbody>
+      {% for st in inactive.startups %}
+        <tr>
+          <td><a href="{% url 'staff:startup_detail' st.pk %}">{{ st.display_name }}</a></td>
+          <td>{% for f in st.founders.all %}{{ f.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td>{{ st.stage.name }}</td>
+          <td>{{ st.assigned_coach.full_name|default:"–" }}</td>
+          <td>{% if st.last_activity_at %}{{ st.last_activity_at|date:"j M Y" }} <span class="sub">{{ st.last_activity_at|timesince }} {% translate "ago" %}</span>{% else %}{% translate "Never" %}{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% if inactive.count > inactive.startups|length %}
+      <p><a href="{% url 'staff:startup_list' %}?scope=all&amp;quiet=on">{% blocktranslate with n=inactive.count %}Show all {{ n }} in the startups list{% endblocktranslate %}</a> ({% translate "the longest-quiet are shown here" %})</p>
+    {% endif %}
+    {% else %}<p class="sub">{% translate "Every active startup had activity recently." %}</p>{% endif %}
+  </section>
+</div>
+<div class="viz-tooltip" id="viz-tooltip" role="tooltip" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}" defer></script>
+{% endblock %}

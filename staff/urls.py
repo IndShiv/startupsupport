@@ -1,12 +1,13 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_activity as activity, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_dashboard, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("dashboard/", views_dashboard.dashboard_view, name="dashboard"),
     path("login/", auth_views.LoginView.as_view(template_name="staff/login.html", redirect_authenticated_user=True), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("intake/", views.intake_queue, name="intake_queue"),

@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–7 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups). The dashboard comes next.
+**Status:** steps 1–8 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard). Export comes next.
 
 ## Stack
 
@@ -117,6 +117,22 @@ Follow-ups* shows *This week* (overdue plus due until Sunday), *Later* and *Done
 everyone (admins also see *Unassigned*). Automatic reminders (e.g. missing programme approval) have
 no assignee and count as yours when you coach the startup. The menu shows how many of yours are
 overdue or due this week.
+
+## Dashboard
+
+*Staff → Dashboard* (the start page after logging in) shows, for a chosen period (last 3/6/12
+months, this academic year from 1 September, or all time):
+
+- registrations in the period, the share of intakes arranged within the promised working days, the
+  number waiting for an intake (and overdue) and the number of active startups;
+- registrations per month and per domain, with a table view and the monthly intake turnaround.
+
+And the current situation ("now"): startups per stage, caseload per coach, graduation-track students
+with missing approval or a hand-in date within 8 weeks (or already passed), and active startups with
+no activity for the number of weeks in *App settings* (stage changes don't count as activity).
+
+**Intake turnaround** counts registrations whose intake was arranged, plus those still waiting past
+their deadline (late); registrations still within their deadline are not counted yet.
 
 ## Email
 
