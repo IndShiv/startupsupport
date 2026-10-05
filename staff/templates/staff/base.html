@@ -22,6 +22,7 @@
         <ul>
           {% url 'staff:intake_queue' as intake_url %}
           <li><a href="{{ intake_url }}" {% if request.path|slice:":14" == "/staff/intake/" %}aria-current="page"{% endif %}>{% translate "Intake queue" %}</a></li>
+          <li><a href="{% url 'staff:followups' %}" {% if request.path|slice:":18" == "/staff/follow-ups/" %}aria-current="page"{% endif %}>{% translate "Follow-ups" %}{% with n=my_followups_due %}{% if n %} <span class="nav-badge" title="{% translate 'Overdue or due this week' %}">{{ n }}<span class="sr-only"> {% translate "due this week" %}</span></span>{% endif %}{% endwith %}</a></li>
           <li><a href="{% url 'staff:pipeline' %}" {% if request.path|slice:":16" == "/staff/pipeline/" %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a></li>
           <li><a href="{% url 'staff:student_list' %}" {% if request.path|slice:":16" == "/staff/students/" %}aria-current="page"{% endif %}>{% translate "Students" %}</a></li>
           <li><a href="{% url 'staff:startup_list' %}" {% if request.path|slice:":16" == "/staff/startups/" %}aria-current="page"{% endif %}>{% translate "Startups" %}</a></li>

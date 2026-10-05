@@ -18,4 +18,10 @@
     <a href="{% url back.0 back.1 %}">{% translate "Cancel" %}</a>
   </div>
 </form>
+{% if delete_url %}
+<form method="post" action="{{ delete_url }}" class="danger-zone">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+</form>
+{% endif %}
 {% endblock %}

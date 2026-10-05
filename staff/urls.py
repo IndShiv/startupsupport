@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
@@ -26,6 +26,14 @@ urlpatterns = [
     path("startups/<int:pk>/founders/<int:founder_pk>/remove/", records.founder_remove, name="founder_remove"),
     path("graduation/<int:pk>/edit/", records.graduation_edit, name="graduation_edit"),
     path("walk-in/", records.walk_in, name="walk_in"),
+    path("startups/<int:pk>/activity/", activity.activity_add, name="activity_add"),
+    path("activity/<int:pk>/edit/", activity.activity_edit, name="activity_edit"),
+    path("activity/<int:pk>/delete/", activity.activity_delete, name="activity_delete"),
+    path("follow-ups/", activity.followup_list, name="followups"),
+    path("follow-ups/new/", activity.followup_create, name="followup_create"),
+    path("follow-ups/<int:pk>/edit/", activity.followup_edit, name="followup_edit"),
+    path("follow-ups/<int:pk>/done/", activity.followup_done, name="followup_done"),
+    path("follow-ups/<int:pk>/snooze/", activity.followup_snooze, name="followup_snooze"),
     path("pipeline/", pipeline.pipeline, name="pipeline"),
     path("pipeline/<int:pk>/move/", pipeline.move, name="pipeline_move"),
     path("notifications/", views.notifications, name="notifications"),

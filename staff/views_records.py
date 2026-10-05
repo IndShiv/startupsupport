@@ -19,8 +19,9 @@ from crm.models import Founder, GraduationTrack, Registration, Startup, Student
 from crm.services import create_registration, duplicate_candidates, merge_students
 from siteconfig.models import PipelineStage
 
-from .forms import FounderForm, GraduationTrackForm, StartupForm, StudentForm, WalkInForm
+from .forms import ActivityForm, FounderForm, GraduationTrackForm, StartupForm, StudentForm, WalkInForm
 from .permissions import is_admin, staff_required
+from .views_activity import can_edit_activity
 
 PAGE_SIZE = 50
 
@@ -68,7 +69,9 @@ def student_detail(request, pk):
         "startups": startups,
         "registrations": student.registrations.select_related("startup", "intake_coach").order_by("-submitted_at"),
         "tracks": student.graduation_tracks.select_related("startup"),
-        "follow_ups": student.follow_ups.filter(done_at__isnull=True),
+        "follow_ups": student.follow_ups.open().select_related("assigned_to").order_by("due_date"),
+        "followup_qs": f"student={student.pk}",
+        "today": timezone.localdate(),
         "merged_from": student.merged_from.all(),
         "candidates": duplicate_candidates(student) if is_admin(request.user) and not student.merged_into_id else [],
         "history": _history(student),
@@ -149,7 +152,7 @@ def startup_list(request):
 
 
 @staff_required
-def startup_detail(request, pk):
+def startup_detail(request, pk, activity_form=None):
     startup = get_object_or_404(Startup.objects.select_related("stage", "assigned_coach"), pk=pk)
     activities = startup.activities.select_related("author")
     if not is_admin(request.user):
@@ -164,8 +167,13 @@ def startup_detail(request, pk):
         "founder_links": startup.founder_links.select_related("student__domain", "student__study_year"),
         "registrations": startup.registrations.select_related("student").order_by("-submitted_at"),
         "tracks": startup.graduation_tracks.select_related("student"),
-        "activities": activities[:20],
-        "follow_ups": startup.follow_ups.filter(done_at__isnull=True),
+        "activities": [(a, can_edit_activity(request.user, a)) for a in activities[: 200 if request.GET.get("all") else 30]],
+        "activity_count": activities.count(),
+        "show_all": bool(request.GET.get("all")),
+        "activity_form": activity_form or ActivityForm(user_is_admin=is_admin(request.user), prefix="activity"),
+        "follow_ups": startup.follow_ups.open().select_related("assigned_to").order_by("due_date"),
+        "today": timezone.localdate(),
+        "followup_qs": f"startup={startup.pk}",
         "founder_q": founder_q,
         "founder_results": founder_results,
         "history": _history(startup),

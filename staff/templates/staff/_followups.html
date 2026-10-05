@@ -1,0 +1,33 @@
+{% load i18n formhelpers %}
+<section class="card" aria-labelledby="fu-title" id="follow-ups">
+  <div class="section-head">
+    <h2 id="fu-title">{% translate "Follow-ups" %}</h2>
+    <a class="btn btn-secondary btn-small" href="{% url 'staff:followup_create' %}?{{ followup_target }}&amp;next={{ request.path|urlencode }}%23follow-ups">+ {% translate "Add follow-up" %}</a>
+  </div>
+  {% if follow_ups %}
+  <ul class="fu-list">
+    {% for f in follow_ups %}
+      <li class="{% if f.due_date < today %}fu-overdue{% elif f.due_date == today %}fu-today{% endif %}">
+        <div>
+          <span class="strong">{{ f.title }}</span>
+          <span class="sub">
+            {% if f.due_date < today %}<span class="late">{% translate "Overdue" %}:</span>{% endif %}
+            {{ f.due_date|date:"D j M" }} · {{ f.assigned_to|person:_("unassigned") }}
+            {% if f.auto_reason %} · {% translate "automatic" %}{% endif %}
+          </span>
+          {% if f.notes %}<span class="sub">{{ f.notes }}</span>{% endif %}
+        </div>
+        <div class="fu-actions">
+          <form method="post" action="{% url 'staff:followup_done' f.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}#follow-ups">
+            <button type="submit" class="btn btn-secondary btn-small">✓ {% translate "Done" %}<span class="sr-only">: {{ f.title }}</span></button></form>
+          <form method="post" action="{% url 'staff:followup_snooze' f.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}#follow-ups">
+            <button type="submit" class="link-button">{% translate "+1 week" %}<span class="sr-only">: {{ f.title }}</span></button></form>
+          <a href="{% url 'staff:followup_edit' f.pk %}?next={{ request.path|urlencode }}%23follow-ups">{% translate "Edit" %}<span class="sr-only">: {{ f.title }}</span></a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p class="sub">{% translate "No open follow-ups." %}</p>
+  {% endif %}
+</section>

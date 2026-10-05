@@ -90,11 +90,41 @@
       <h3>{% translate "Goals for the coach track" %}</h3><p>{{ st.goals|linebreaksbr|default:"–" }}</p>
     </section>
 
-    <section class="card" aria-labelledby="activity-title">
-      <h2 id="activity-title">{% translate "Recent activity" %}</h2>
-      {% for a in activities %}
-        <article class="activity"><p class="sub">{{ a.date|date:"j M Y" }} · {{ a.get_kind_display }} · {{ a.author|person }}{% if a.admin_only %} · {% translate "admin only" %}{% endif %}</p><p>{{ a.body|linebreaksbr }}</p></article>
-      {% empty %}<p class="sub">{% translate "No activity yet." %}</p>{% endfor %}
+    {% include "staff/_followups.html" with followup_target=followup_qs %}
+
+    <section class="card" aria-labelledby="activity-title" id="activity">
+      <h2 id="activity-title">{% translate "Activity log" %}</h2>
+      <details class="action-panel" {% if activity_form.errors %}open{% endif %}>
+        <summary>+ {% translate "Add to activity log" %}</summary>
+        <form method="post" action="{% url 'staff:activity_add' st.pk %}" novalidate>
+          {% csrf_token %}
+          {% if activity_form.non_field_errors %}<p class="error">{{ activity_form.non_field_errors|join:" " }}</p>{% endif %}
+          <div class="form-row">
+            {% with field=activity_form.kind %}{% include "staff/_field.html" %}{% endwith %}
+            {% with field=activity_form.date %}{% include "staff/_field.html" %}{% endwith %}
+          </div>
+          {% with field=activity_form.body %}{% include "staff/_field.html" %}{% endwith %}
+          {% if activity_form.admin_only %}{% with field=activity_form.admin_only %}{% include "staff/_field.html" %}{% endwith %}{% endif %}
+          <div class="form-row">
+            {% with field=activity_form.follow_up_title %}{% include "staff/_field.html" %}{% endwith %}
+            {% with field=activity_form.follow_up_due %}{% include "staff/_field.html" %}{% endwith %}
+          </div>
+          <button type="submit" class="btn btn-primary">{% translate "Add" %}</button>
+        </form>
+      </details>
+      <ol class="timeline">
+        {% for a, editable in activities %}
+          <li class="kind-{{ a.kind }}{% if a.admin_only %} admin-only{% endif %}">
+            <p class="sub"><span class="kind-label">{{ a.get_kind_display }}</span> · <time datetime="{{ a.date|date:'Y-m-d' }}">{{ a.date|date:"j M Y" }}</time> · {{ a.author|person:_("system") }}
+              {% if a.admin_only %} · <strong>{% translate "admin only" %}</strong>{% endif %}
+              {% if editable %} · <a href="{% url 'staff:activity_edit' a.pk %}">{% translate "Edit" %}<span class="sr-only"> {{ a.get_kind_display }} {{ a.date|date:"j M Y" }}</span></a>{% endif %}</p>
+            <p>{{ a.body|linebreaksbr }}</p>
+          </li>
+        {% empty %}<li class="sub">{% translate "No activity yet." %}</li>{% endfor %}
+      </ol>
+      {% if not show_all and activity_count > activities|length %}
+        <p><a href="?all=1#activity">{% blocktranslate with n=activity_count %}Show all {{ n }} entries{% endblocktranslate %}</a></p>
+      {% endif %}
     </section>
 
     <section class="card" aria-labelledby="sregs-title">

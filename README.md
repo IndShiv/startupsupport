@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–6 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board). The activity log and follow-ups come next.
+**Status:** steps 1–7 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups). The dashboard comes next.
 
 ## Stack
 
@@ -104,6 +104,19 @@ choose to show them. Every move is written to the startup's activity log as a st
 does not count as "activity" for the inactivity warning) and to the audit log. Stages are configured
 in *Admin → Pipeline stages*: name, order, colour, and whether a stage is closed or marks the intake
 as scheduled/done.
+
+## Activity log and follow-ups
+
+Each startup page has an **activity log**: notes, meetings, emails, event attendance and referrals,
+each with a date and author. Intakes and stage changes are added automatically (read-only). The
+author or an admin can edit or delete an entry; admins can mark an entry *admin only* for sensitive
+information. Adding an entry can create a follow-up in the same step.
+
+**Follow-ups** are reminders with a due date and an assignee, on a startup or a student. *Staff →
+Follow-ups* shows *This week* (overdue plus due until Sunday), *Later* and *Done*, for yourself or
+everyone (admins also see *Unassigned*). Automatic reminders (e.g. missing programme approval) have
+no assignee and count as yours when you coach the startup. The menu shows how many of yours are
+overdue or due this week.
 
 ## Email
 

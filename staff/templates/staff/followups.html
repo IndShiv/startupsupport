@@ -1,0 +1,59 @@
+{% extends "staff/base.html" %}
+{% load i18n formhelpers %}
+{% block title %}{% translate "Follow-ups" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% if scope == "mine" %}{% translate "My follow-ups" %}{% else %}{% translate "Follow-ups" %}{% endif %}</h1>
+    <p class="help">{% blocktranslate with d=week_end|date:"l j F" %}“This week” shows everything overdue or due until {{ d }}. Automatic reminders without an assignee count as yours when you coach the startup.{% endblocktranslate %}</p>
+  </div>
+  <nav class="view-toggle" aria-label="{% translate 'Whose follow-ups' %}">
+    {% for key, label in scopes.items %}<a href="?scope={{ key }}&amp;tab={{ tab }}" {% if key == scope %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+  </nav>
+</div>
+
+<nav class="tabs" aria-label="{% translate 'When' %}">
+  {% for key, label in tabs.items %}<a href="?scope={{ scope }}&amp;tab={{ key }}" {% if key == tab %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
+
+{% if overdue %}<p class="alert-inline overdue" role="status">{% blocktranslate count n=overdue %}{{ n }} follow-up is overdue.{% plural %}{{ n }} follow-ups are overdue.{% endblocktranslate %}</p>{% endif %}
+
+{% if items %}
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Follow-ups" %}</caption>
+  <thead><tr>
+    <th scope="col">{% if tab == "done" %}{% translate "Done on" %}{% else %}{% translate "Due" %}{% endif %}</th>
+    <th scope="col">{% translate "Follow-up" %}</th><th scope="col">{% translate "About" %}</th>
+    <th scope="col">{% translate "Assigned to" %}</th><th scope="col"><span class="sr-only">{% translate "Actions" %}</span></th>
+  </tr></thead>
+  <tbody>
+  {% for f in items %}
+    <tr class="{% if tab != 'done' and f.due_date < today %}row-overdue{% elif tab != 'done' and f.due_date == today %}row-due-soon{% endif %}">
+      <td>{% if tab == "done" %}{{ f.done_at|date:"D j M" }}{% else %}
+        {% if f.due_date < today %}<span class="due due-overdue">{% translate "Overdue" %}</span>{% elif f.due_date == today %}<span class="due due-due-soon">{% translate "Today" %}</span>{% endif %}
+        <span class="sub">{{ f.due_date|date:"D j M" }}</span>{% endif %}</td>
+      <td><span class="strong">{{ f.title }}</span>{% if f.auto_reason %} <span class="tag">{% translate "automatic" %}</span>{% endif %}{% if f.notes %}<span class="sub">{{ f.notes|truncatewords:20 }}</span>{% endif %}</td>
+      <td>
+        {% if f.startup %}<a href="{% url 'staff:startup_detail' f.startup.pk %}">{{ f.startup.display_name }}</a>{% endif %}
+        {% if f.student %}<span class="sub"><a href="{% url 'staff:student_detail' f.student.pk %}">{{ f.student.full_name }}</a></span>{% endif %}
+      </td>
+      <td>{{ f.assigned_to|person:_("Unassigned") }}</td>
+      <td class="fu-actions">
+        <form method="post" action="{% url 'staff:followup_done' f.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-secondary btn-small">{% if f.done_at %}{% translate "Reopen" %}{% else %}✓ {% translate "Done" %}{% endif %}<span class="sr-only">: {{ f.title }}</span></button></form>
+        {% if not f.done_at %}
+        <form method="post" action="{% url 'staff:followup_snooze' f.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="link-button">{% translate "+1 week" %}<span class="sr-only">: {{ f.title }}</span></button></form>
+        <a href="{% url 'staff:followup_edit' f.pk %}?next={{ request.get_full_path|urlencode }}">{% translate "Edit" %}<span class="sr-only">: {{ f.title }}</span></a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">{% if tab == "week" %}{% translate "Nothing due this week. 🎉" %}{% else %}{% translate "Nothing here." %}{% endif %}</p>
+{% endif %}
+{% endblock %}

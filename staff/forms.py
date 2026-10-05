@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
 from crm.intake import coaches_with_caseload, conflicting_students, domain_conflict
-from crm.models import GraduationTrack, Startup, Student, Tag
+from crm.models import Activity, FollowUp, GraduationTrack, Startup, Student, Tag
 from public.forms import RegistrationForm
 
 
@@ -250,3 +250,68 @@ class WalkInForm(RegistrationForm):
     @property
     def is_spam(self):
         return False
+
+
+# -- activity log and follow-ups ---------------------------------------------------------------
+
+def staff_user_choices():
+    from django.contrib.auth.models import User
+
+    return User.objects.filter(is_active=True, groups__name__in=["Admin", "Coach"]).distinct().order_by("first_name", "last_name")
+
+
+class StaffUserField(forms.ModelChoiceField):
+    def label_from_instance(self, user):
+        return user.get_full_name() or user.username
+
+
+class ActivityForm(forms.ModelForm):
+    follow_up_title = forms.CharField(label=_("Follow-up (optional)"), max_length=200, required=False, help_text=_("e.g. “Check in after customer interviews”"))
+    follow_up_due = forms.DateField(label=_("Follow-up due on"), required=False, widget=DateInput())
+
+    class Meta:
+        model = Activity
+        fields = ["kind", "date", "body", "admin_only"]
+        widgets = {"date": DateInput(), "body": forms.Textarea(attrs={"rows": 4})}
+
+    def __init__(self, *args, user_is_admin=False, with_follow_up=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["kind"].choices = [c for c in Activity.Kind.choices if c[0] not in Activity.SYSTEM_KINDS]
+        self.fields["body"].label = _("What happened?")
+        if not self.instance.pk:
+            self.initial.setdefault("date", timezone.localdate())
+        if not user_is_admin:
+            del self.fields["admin_only"]
+        else:
+            self.fields["admin_only"].help_text = _("For sensitive information, e.g. personal circumstances. Coaches won't see it.")
+        if not with_follow_up:
+            del self.fields["follow_up_title"]
+            del self.fields["follow_up_due"]
+
+    def clean_date(self):
+        value = self.cleaned_data["date"]
+        if value > timezone.localdate():
+            raise forms.ValidationError(_("The log is for things that happened. Plan future meetings as a follow-up."))
+        return value
+
+    def clean(self):
+        data = super().clean()
+        title, due = data.get("follow_up_title"), data.get("follow_up_due")
+        if title and not due:
+            self.add_error("follow_up_due", _("Please choose a due date for the follow-up."))
+        if due and not title:
+            self.add_error("follow_up_title", _("Please describe the follow-up."))
+        return data
+
+
+class FollowUpForm(forms.ModelForm):
+    assigned_to = StaffUserField(label=_("Assigned to"), queryset=None, required=False, empty_label=_("Nobody yet"))
+
+    class Meta:
+        model = FollowUp
+        fields = ["title", "due_date", "assigned_to", "notes"]
+        widgets = {"due_date": DateInput(), "notes": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assigned_to"].queryset = staff_user_choices()

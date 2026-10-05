@@ -241,6 +241,9 @@ class GraduationTrack(models.Model):
 
 
 class Activity(models.Model):
+    # Written by the system (intake recorded, stage changed); shown read-only in the log.
+    SYSTEM_KINDS = ("intake", "stage")
+
     class Kind(models.TextChoices):
         NOTE = "note", _("Note")
         MEETING = "meeting", _("Meeting")
@@ -275,6 +278,24 @@ class Activity(models.Model):
         ).update(last_activity_at=self.created_at)
 
 
+class FollowUpQuerySet(models.QuerySet):
+    def open(self):
+        return self.filter(done_at__isnull=True)
+
+    def for_user(self, user):
+        """Assigned to the user, or unassigned on a startup they coach (e.g. automatic reminders)."""
+        coach = getattr(user, "coach", None)
+        query = Q(assigned_to=user)
+        if coach is not None:
+            query |= Q(assigned_to__isnull=True) & (
+                Q(startup__assigned_coach=coach) | Q(startup__isnull=True, student__startups__assigned_coach=coach)
+            )
+        return self.filter(query).distinct()
+
+    def due_by(self, day):
+        return self.filter(due_date__lte=day)
+
+
 class FollowUp(models.Model):
     startup = models.ForeignKey(Startup, verbose_name=_("startup"), null=True, blank=True, on_delete=models.CASCADE, related_name="follow_ups")
     student = models.ForeignKey(Student, verbose_name=_("student"), null=True, blank=True, on_delete=models.CASCADE, related_name="follow_ups")
@@ -287,6 +308,8 @@ class FollowUp(models.Model):
     done_at = models.DateTimeField(_("done at"), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = FollowUpQuerySet.as_manager()
+
     class Meta:
         ordering = ["due_date"]
         verbose_name = _("follow-up")
@@ -294,6 +317,10 @@ class FollowUp(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_done(self):
+        return self.done_at is not None
 
 
 class OutgoingEmail(models.Model):

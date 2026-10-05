@@ -38,10 +38,6 @@
       <dt>{% translate "Study year" %}</dt><dd>{{ s.study_year.name }}</dd>
       <dt>{% translate "In the system since" %}</dt><dd>{{ s.created_at|date:"j F Y" }}</dd>
     </dl>
-    {% if follow_ups %}
-      <h3>{% translate "Open follow-ups" %}</h3>
-      <ul class="plain">{% for f in follow_ups %}<li>{{ f.title }} · <span class="sub">{% translate "due" %} {{ f.due_date|date:"j M" }}</span></li>{% endfor %}</ul>
-    {% endif %}
     {% if merged_from %}
       <h3>{% translate "Merged records" %}</h3>
       <ul class="plain">{% for m in merged_from %}<li><a href="{% url 'staff:student_detail' m.pk %}">{{ m.full_name }}</a> · {{ m.email }}</li>{% endfor %}</ul>
@@ -88,6 +84,7 @@
         </tbody>
       </table>
     </section>
+    {% include "staff/_followups.html" with followup_target=followup_qs %}
     {% include "staff/_history.html" %}
   </div>
 </div>

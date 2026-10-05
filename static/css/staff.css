@@ -92,6 +92,8 @@ ul.plain { padding-left: 1.1rem; margin: .25rem 0; }
 
 @media (max-width: 88rem) {
   .staff-bar .brand-name { display: none; }
+  .who { display: none; }
+  .staff-nav a { padding: .5rem .5rem; }
 }
 @media (max-width: 60rem) {
   .detail-grid { grid-template-columns: 1fr; }
@@ -174,3 +176,28 @@ table.compact td, table.compact th { padding: .45rem .5rem; }
 .empty-col { color: var(--muted); font-size: .85rem; text-align: center; margin: 1rem 0; }
 .inline-stage { display: flex; gap: .35rem; }
 .js .js-hide { display: none; }
+
+/* Activity log and follow-ups */
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 2px solid var(--brand-orange); margin-bottom: .75rem; }
+.section-head h2 { border: 0; margin: 0; padding-bottom: .3rem; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
+.timeline { list-style: none; padding: 0; margin: 1rem 0 0; }
+.timeline li { border-left: 3px solid var(--border-light); padding: .25rem 0 .6rem .9rem; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -.45rem; top: .55rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--brand-navy); }
+.timeline li p { margin: .1rem 0; }
+.timeline .kind-label { font-weight: 700; color: var(--brand-navy); }
+.timeline li.kind-stage, .timeline li.kind-intake { color: var(--muted); }
+.timeline li.kind-stage::before { background: var(--border); }
+.timeline li.kind-intake::before { background: var(--brand-orange); }
+.timeline li.admin-only { background: #fffaeb; }
+.fu-list { list-style: none; padding: 0; margin: 0; }
+.fu-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; padding: .6rem 0; border-bottom: 1px solid var(--border-light); }
+.fu-list li:last-child { border-bottom: 0; }
+.fu-list li.fu-overdue { box-shadow: inset 3px 0 0 var(--error); padding-left: .6rem; }
+.fu-list li.fu-today { box-shadow: inset 3px 0 0 #dc6803; padding-left: .6rem; }
+.fu-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.fu-actions form { margin: 0; }
+.nav-badge { display: inline-block; background: var(--error); color: #fff; border-radius: 999px; font-size: .72rem; padding: 0 .4rem; margin-left: .2rem; vertical-align: middle; }
+.staff-nav a[aria-current="page"] .nav-badge { background: #fff; color: var(--error); }
+.danger-zone { max-width: 48rem; margin-top: .5rem; }
+.btn-danger { background: #fff; color: var(--error); border-color: var(--error); }
