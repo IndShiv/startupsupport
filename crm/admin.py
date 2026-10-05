@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 
 from .emails import send_registration_email
-from .models import Activity, Coach, Founder, FollowUp, GraduationTrack, Notification, OutgoingEmail, Registration, Startup, Student, Tag
+from .models import Activity, Coach, ExportLog, Founder, FollowUp, GraduationTrack, Notification, OutgoingEmail, Registration, Startup, Student, Tag
 
 
 @admin.register(Coach)
@@ -100,3 +100,16 @@ class NotificationAdmin(admin.ModelAdmin):
 admin.site.register(Tag)
 admin.site.site_header = "BUSS Startup Support"
 admin.site.site_title = "BUSS admin"
+
+
+@admin.register(ExportLog)
+class ExportLogAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "user", "kind", "file_format", "row_count"]
+    list_filter = ["kind", "file_format", "user"]
+    readonly_fields = [f.name for f in ExportLog._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -8,7 +8,7 @@
 </div>
 {% translate "Name, email, student number or phone" as search_placeholder %}
 {% include "staff/_filters.html" %}
-{% include "staff/_pagination.html" %}
+<div class="list-bar">{% include "staff/_pagination.html" %}{% include "staff/_export.html" with kind="students" export_qs=qs %}</div>
 {% if page.object_list %}
 <div class="table-wrap">
 <table class="queue">

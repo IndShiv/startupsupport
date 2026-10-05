@@ -254,3 +254,8 @@ table.compact td, table.compact th { padding: .45rem .5rem; }
 .table-view summary { cursor: pointer; color: var(--brand-navy); font-weight: 600; font-size: .9rem; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .grad-list li { margin: .25rem 0; }
+
+/* Export */
+.list-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1rem; }
+.list-bar .pagination { flex: 1; }
+.export-buttons { display: flex; align-items: center; gap: .4rem; margin-left: auto; }

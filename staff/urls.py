@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_activity as activity, views_dashboard, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_dashboard, views_export, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
@@ -12,6 +12,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("intake/", views.intake_queue, name="intake_queue"),
     path("intake/<int:pk>/", views.intake_detail, name="intake_detail"),
+    path("export/<str:kind>.<str:file_format>", views_export.export_list, name="export"),
     path("students/", records.student_list, name="student_list"),
     path("students/<int:pk>/", records.student_detail, name="student_detail"),
     path("students/<int:pk>/edit/", records.student_edit, name="student_edit"),

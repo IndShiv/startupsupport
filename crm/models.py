@@ -374,3 +374,22 @@ auditlog.register(Registration, exclude_fields=["answers"])
 auditlog.register(GraduationTrack)
 auditlog.register(Activity)
 auditlog.register(FollowUp)
+
+
+class ExportLog(models.Model):
+    """Who exported which list (exports contain personal data, so every export is recorded)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("exported by"), null=True, on_delete=models.SET_NULL, related_name="+")
+    kind = models.CharField(_("list"), max_length=30)
+    file_format = models.CharField(_("format"), max_length=10)
+    filters = models.JSONField(_("filters"), default=dict, blank=True)
+    row_count = models.PositiveIntegerField(_("rows"))
+    created_at = models.DateTimeField(_("exported at"), auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("export")
+        verbose_name_plural = _("exports")
+
+    def __str__(self):
+        return f"{self.kind} ({self.file_format}) · {self.row_count} rows"

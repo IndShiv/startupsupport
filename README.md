@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–8 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard). Export comes next.
+**Status:** steps 1–9 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export). The Microsoft Forms import comes next.
 
 ## Stack
 
@@ -133,6 +133,19 @@ no activity for the number of weeks in *App settings* (stage changes don't count
 
 **Intake turnaround** counts registrations whose intake was arranged, plus those still waiting past
 their deadline (late); registrations still within their deadline are not counted yet.
+
+## Export
+
+The *Students*, *Startups* and *Pipeline* pages have **Excel** and **CSV** buttons that export exactly
+the list you are looking at (same search and filters, including "my caseload" for coaches).
+
+- **Excel** has real dates, a frozen header row with filters, and an *About this export* sheet with
+  who exported it, when, the filters used and a privacy reminder.
+- **CSV** is comma-separated UTF-8 (with BOM, so Excel shows accented names correctly).
+- Text that a spreadsheet would run as a formula is neutralised (CSV injection). In CSV this
+  means values starting with `=`, `+`, `-` or `@` get a leading apostrophe (e.g. phone numbers like
+  `'+31 6…`); in Excel files only values starting with `=` need it.
+- Every export is logged under *Admin → Students & startups → Exports* (who, which list, filters, rows).
 
 ## Email
 

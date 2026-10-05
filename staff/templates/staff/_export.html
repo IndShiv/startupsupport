@@ -1,0 +1,6 @@
+{% load i18n %}
+<div class="export-buttons" role="group" aria-label="{% translate 'Export this list' %}">
+  <span class="sub">{% translate "Export this list:" %}</span>
+  <a class="btn btn-secondary btn-small" href="{% url 'staff:export' kind 'xlsx' %}?{{ export_qs }}">{% translate "Excel" %}</a>
+  <a class="btn btn-secondary btn-small" href="{% url 'staff:export' kind 'csv' %}?{{ export_qs }}">{% translate "CSV" %}</a>
+</div>
