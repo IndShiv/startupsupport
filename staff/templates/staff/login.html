@@ -1,17 +1,32 @@
 {% extends "staff/base.html" %}
 {% load i18n %}
-{% block title %}{% translate "Log in" %}{% endblock %}
+{% block title %}{% translate "Sign in" %}{% endblock %}
 {% block content %}
-<div class="card narrow">
-  <h1>{% translate "Staff login" %}</h1>
-  <p class="help">{% translate "For BUSS coaches and administrators. Sign-in with your BUas account follows later." %}</p>
-  {% if form.errors %}<p class="error" role="alert">{% translate "Your username and password didn't match. Please try again." %}</p>{% endif %}
-  <form method="post">
-    {% csrf_token %}
-    <div class="field"><label for="id_username">{% translate "Username" %}</label>{{ form.username }}</div>
-    <div class="field"><label for="id_password">{% translate "Password" %}</label>{{ form.password }}</div>
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit" class="btn btn-primary">{% translate "Log in" %}</button>
-  </form>
+<div class="card narrow login-card">
+  <h1>{% translate "Sign in" %}</h1>
+  <p class="help">{% translate "For BUSS coaches and administrators." %}</p>
+
+  {% if sso_enabled %}
+    <a class="btn btn-primary btn-block" href="{% url 'oidc_authentication_init' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
+      {% translate "Sign in with your BUas account" %}
+    </a>
+    <p class="help">{% translate "You use your usual BUas login (Microsoft). No separate password needed." %}</p>
+  {% endif %}
+
+  {% if local_login_enabled %}
+    {% if sso_enabled %}<p class="divider"><span>{% translate "or, for development" %}</span></p>{% endif %}
+    {% if form.errors %}<p class="error" role="alert">{% translate "Your username and password didn't match. Please try again." %}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="field"><label for="id_username">{% translate "Username" %}</label>{{ form.username }}</div>
+      <div class="field"><label for="id_password">{% translate "Password" %}</label>{{ form.password }}</div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn {% if sso_enabled %}btn-secondary{% else %}btn-primary{% endif %}">{% translate "Sign in with password" %}</button>
+    </form>
+  {% endif %}
+
+  {% if not sso_enabled and not local_login_enabled %}
+    <p class="error" role="alert">{% translate "Sign-in is not configured yet. Ask BUas IT to set up the Entra ID connection (see the README)." %}</p>
+  {% endif %}
 </div>
 {% endblock %}

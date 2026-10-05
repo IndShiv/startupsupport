@@ -1,0 +1,30 @@
+{% extends "staff/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Team" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% translate "Team" %}</h1>
+    <p class="help">{% translate "Who can use BUSS and in which role. Coaches see and edit all records and form content; admins also manage the team, settings, imports, merges and privacy tools. People sign in with their BUas account; add them here first, or give them a BUSS app role in Entra ID." %}</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'staff:team_add' %}">+ {% translate "Add a team member" %}</a>
+</div>
+<div class="table-wrap">
+<table class="queue">
+  <caption class="sr-only">{% translate "Team members" %}</caption>
+  <thead><tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col">{% translate "Coach profile" %}</th><th scope="col">{% translate "BUas sign-in" %}</th><th scope="col">{% translate "Last sign-in" %}</th><th scope="col"><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+  <tbody>
+  {% for m in members %}{% with u=m.user %}
+    <tr>
+      <td><span class="strong">{{ u.get_full_name|default:u.username }}</span><span class="sub">{{ u.email }}</span>{% if not u.is_active %}<span class="tag">{% translate "Inactive" %}</span>{% endif %}</td>
+      <td>{% if m.role %}{{ m.role }}{% else %}<span class="late">{% translate "No access" %}</span>{% endif %}</td>
+      <td>{{ m.coach.full_name|default:"–" }}</td>
+      <td>{% if m.sso %}✓ {% translate "linked" %}{% else %}<span class="sub">{% translate "not yet signed in" %}</span>{% endif %}</td>
+      <td>{{ u.last_login|date:"j M Y H:i"|default:"–" }}</td>
+      <td><a href="{% url 'staff:team_edit' u.pk %}">{% translate "Edit" %}<span class="sr-only"> {{ u.get_full_name }}</span></a></td>
+    </tr>
+  {% endwith %}{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

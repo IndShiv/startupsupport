@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url back.0 back.1 %}">← {% translate "Back" %}</a></p>
+<p class="breadcrumb"><a href="{% if back.1 %}{% url back.0 back.1 %}{% else %}{% url back.0 %}{% endif %}">← {% translate "Back" %}</a></p>
 <h1>{{ title }}</h1>
 <form method="post" class="card form-card" novalidate>
   {% csrf_token %}
@@ -15,7 +15,7 @@
   {% endfor %}
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
-    <a href="{% url back.0 back.1 %}">{% translate "Cancel" %}</a>
+    <a href="{% if back.1 %}{% url back.0 back.1 %}{% else %}{% url back.0 %}{% endif %}">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% if delete_url %}

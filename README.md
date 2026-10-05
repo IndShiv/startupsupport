@@ -6,7 +6,7 @@ intakes, follow progress and keep notes.
 
 See [docs/PLAN.md](docs/PLAN.md) for the data model, pages and build order.
 
-**Status:** steps 1–10 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export, spreadsheet import). Staff authentication (Entra ID) and roles come next.
+**Status:** steps 1–11 of 12 are done (data model, seed data, admin, public registration form, emails, intake queue, student and startup records, pipeline board, activity log and follow-ups, dashboard, export, spreadsheet import, staff sign-in and roles). The GDPR tools come next.
 
 ## Stack
 
@@ -63,6 +63,10 @@ and never overwrites admin edits).
 | `POSTGRES_PASSWORD` | Used by docker-compose | `buss-dev-password` |
 | `DJANGO_TRUST_X_FORWARDED_FOR` | `1` behind a reverse proxy, so rate limiting sees the real client IP | `0` |
 | `DJANGO_MEDIA_ROOT` | Where uploaded photos are stored | `./media` |
+| `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | Staff sign-in with BUas accounts (see *Staff sign-in and roles*) | — (disabled) |
+| `ENTRA_ALLOWED_DOMAINS` | Email domains that may sign in | `buas.nl` |
+| `ENTRA_ROLE_MAP` | Entra app roles → BUSS roles; empty = roles only via the Team page | `BUSS.Admin=Admin,BUSS.Coach=Coach` |
+| `LOCAL_LOGIN_ENABLED` | Username/password sign-in (development) | on with `DJANGO_DEBUG=1`, else off |
 | `SITE_URL` | Public address, used for links and the logo in emails | `http://localhost:8000` |
 | `EMAIL_PROVIDER` | `console`, `smtp` or `graph` | `console` |
 | `DEFAULT_FROM_EMAIL`, `EMAIL_REPLY_TO` | Sender and reply-to address | `startupsupport@buas.nl` |
@@ -70,6 +74,49 @@ and never overwrites admin edits).
 | `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `GRAPH_SENDER` | Microsoft Graph sender | sender `startupsupport@buas.nl` |
 
 In production, run the app behind a reverse proxy that terminates HTTPS and redirects HTTP to HTTPS.
+
+## Staff sign-in and roles
+
+Staff sign in with their **BUas account** (Microsoft Entra ID, OpenID Connect with PKCE). The public
+registration form needs no sign-in. There are two roles:
+
+| | Coach | Admin |
+|---|---|---|
+| Dashboard, intake queue, students, startups, pipeline, activity log, follow-ups, export, walk-ins | ✓ | ✓ |
+| Edit form content (page texts, option lists, coach profiles, email templates, partners) | ✓ | ✓ |
+| Read "admin only" notes, merge students, import data, see unassigned follow-ups | | ✓ |
+| Team & roles, app settings, pipeline stages, privacy statement, user accounts | | ✓ |
+
+Coaches see all records, with their own caseload shown by default.
+
+**Who may sign in:** BUas accounts (tenant `ENTRA_TENANT_ID`, email domain in `ENTRA_ALLOWED_DOMAINS`)
+that either have a BUSS **app role** in Entra ID, or were added by an admin on *Admin → Team & roles*
+(matched on email the first time, then on the permanent Entra object ID). Anyone else is refused
+with an explanation. Deactivating someone on the Team page ends their access immediately. App roles,
+when used, are applied at every sign-in, so removing someone's role in Entra ID removes their access.
+Signing out also signs out of the Microsoft session. Password sign-in exists for local development
+only and is off in production unless `LOCAL_LOGIN_ENABLED=1`. The configuration admin (`/admin/`)
+uses the same sign-in.
+
+**What BUas IT needs to set up** (Entra admin centre → App registrations → New registration):
+
+1. Name e.g. *BUSS Startup Support*, single tenant (BUas only).
+2. Redirect URI (Web): `https://<your-host>/oidc/callback/`; front-channel logout URL:
+   `https://<your-host>/staff/login/`.
+3. *Certificates & secrets*: create a client secret → `ENTRA_CLIENT_SECRET`. Note the *Application
+   (client) ID* → `ENTRA_CLIENT_ID` and *Directory (tenant) ID* → `ENTRA_TENANT_ID`.
+4. *Token configuration*: add the optional ID-token claims `email`, `given_name` and `family_name`.
+5. Optional, recommended: *App roles* `BUSS.Admin` and `BUSS.Coach` (allowed member types: users/groups);
+   then in *Enterprise applications → BUSS Startup Support → Users and groups* assign coaches and admins,
+   and set *Assignment required* to *Yes* so only assigned people can sign in.
+   Without app roles, add people on the Team page instead (and set `ENTRA_ROLE_MAP=` empty).
+
+No Microsoft Graph API permissions are needed for sign-in (only `openid`, `email`, `profile`). The same
+app registration can also hold the *Mail.Send* permission for sending email (see *Email*), or you
+can use a separate one.
+
+For local development keep `DJANGO_DEBUG=1` and use the demo logins; the sign-in page then shows
+the password form (and the BUas button too, if the `ENTRA_*` variables are set).
 
 ## Intake queue
 

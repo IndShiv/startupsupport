@@ -268,3 +268,20 @@ table.compact td, table.compact th { padding: .45rem .5rem; }
 .sticky-actions { position: sticky; bottom: 0; background: var(--bg-soft); padding: .75rem 0; border-top: 1px solid var(--border-light); z-index: 5; }
 .import-preview .warnings { margin: 0; padding-left: 1rem; font-size: .85rem; color: #93370d; }
 .import-preview tr.action-skip td, .import-preview tr.action-error td { color: var(--muted); }
+
+/* Sign-in */
+.btn-block { display: block; text-align: center; text-decoration: none; margin: 1rem 0 .5rem; }
+.btn-block.btn-primary { margin-left: 0; color: #fff; }
+.divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .9rem; margin: 1.25rem 0; }
+.divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--border-light); }
+.login-card .field input { width: 100%; font: inherit; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: 8px; }
+
+/* Admin dropdown in the menu (native <details>: keyboard accessible, no JavaScript needed) */
+.nav-menu { position: relative; }
+.nav-menu summary { list-style: none; cursor: pointer; padding: .5rem .65rem; border-radius: 8px; font-weight: 600; color: var(--brand-navy); }
+.nav-menu summary::-webkit-details-marker { display: none; }
+.nav-menu summary::after { content: " ▾"; font-size: .8em; }
+.nav-menu summary:hover { background: var(--bg-soft); }
+.nav-menu summary.current { background: var(--brand-navy); color: #fff; }
+.nav-menu ul { position: absolute; right: 0; top: calc(100% + .25rem); z-index: 30; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.1); padding: .35rem; min-width: 12rem; display: block !important; }
+.nav-menu ul a { white-space: nowrap; }

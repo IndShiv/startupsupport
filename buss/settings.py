@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "auditlog",
+    "mozilla_django_oidc",
     "siteconfig",
     "crm",
     "public",
@@ -128,6 +129,38 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "staff:login"
 LOGIN_REDIRECT_URL = "staff:home"
 LOGOUT_REDIRECT_URL = "staff:login"
+
+# -- Staff sign-in --------------------------------------------------------------------------------
+# Microsoft Entra ID (single sign-on with BUas accounts). Enabled when tenant and client ID are set.
+ENTRA_TENANT_ID = os.environ.get("ENTRA_TENANT_ID", "")
+ENTRA_CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "")
+ENTRA_CLIENT_SECRET = os.environ.get("ENTRA_CLIENT_SECRET", "")
+ENTRA_ALLOWED_DOMAINS = env_list("ENTRA_ALLOWED_DOMAINS", "buas.nl")
+# Entra ID app roles -> BUSS roles, e.g. "BUSS.Admin=Admin,BUSS.Coach=Coach". Empty: roles are managed on the Team page.
+ENTRA_ROLE_MAP = dict(item.split("=", 1) for item in env_list("ENTRA_ROLE_MAP", "BUSS.Admin=Admin,BUSS.Coach=Coach"))
+SSO_ENABLED = bool(ENTRA_TENANT_ID and ENTRA_CLIENT_ID)
+# Username/password sign-in: for local development. Off in production unless explicitly enabled.
+LOCAL_LOGIN_ENABLED = env_bool("LOCAL_LOGIN_ENABLED", DEBUG)
+
+AUTHENTICATION_BACKENDS = ["staff.auth.EntraBackend", "staff.auth.LocalBackend"]
+
+_entra = f"https://login.microsoftonline.com/{ENTRA_TENANT_ID or 'common'}"
+OIDC_RP_CLIENT_ID = ENTRA_CLIENT_ID
+OIDC_RP_CLIENT_SECRET = ENTRA_CLIENT_SECRET
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_RP_SCOPES = "openid email profile"
+OIDC_OP_AUTHORIZATION_ENDPOINT = f"{_entra}/oauth2/v2.0/authorize"
+OIDC_OP_TOKEN_ENDPOINT = f"{_entra}/oauth2/v2.0/token"
+OIDC_OP_JWKS_ENDPOINT = f"{_entra}/discovery/v2.0/keys"
+OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"  # required by the library, not called
+OIDC_USE_PKCE = True
+OIDC_TIMEOUT = 15
+LOGIN_REDIRECT_URL_FAILURE = "/staff/login/?sso=failed"
+ENTRA_LOGOUT_URL = f"{_entra}/oauth2/v2.0/logout"
+
+# Staff sessions last a working day.
+SESSION_COOKIE_AGE = 60 * 60 * 9
+SESSION_COOKIE_SAMESITE = "Lax"
 
 # Absolute address of the app, used for links in emails.
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")

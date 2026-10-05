@@ -1,18 +1,20 @@
-from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views, views_activity as activity, views_dashboard, views_export, views_import, views_pipeline as pipeline, views_records as records
+from . import views, views_activity as activity, views_auth, views_dashboard, views_export, views_import, views_team, views_pipeline as pipeline, views_records as records
 
 app_name = "staff"
 
 urlpatterns = [
     path("", views.home, name="home"),
     path("dashboard/", views_dashboard.dashboard_view, name="dashboard"),
-    path("login/", auth_views.LoginView.as_view(template_name="staff/login.html", redirect_authenticated_user=True), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("login/", views_auth.StaffLoginView.as_view(), name="login"),
+    path("logout/", views_auth.staff_logout, name="logout"),
     path("intake/", views.intake_queue, name="intake_queue"),
     path("intake/<int:pk>/", views.intake_detail, name="intake_detail"),
     path("export/<str:kind>.<str:file_format>", views_export.export_list, name="export"),
+    path("team/", views_team.team, name="team"),
+    path("team/add/", views_team.team_edit, name="team_add"),
+    path("team/<int:pk>/", views_team.team_edit, name="team_edit"),
     path("import/", views_import.import_start, name="import_start"),
     path("import/<int:pk>/sheet/", views_import.import_sheet, name="import_sheet"),
     path("import/<int:pk>/map/", views_import.import_map, name="import_map"),

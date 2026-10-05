@@ -7,3 +7,4 @@ django-auditlog>=3.0,<4
 holidays>=0.60
 Pillow>=11,<13
 openpyxl>=3.1,<4
+mozilla-django-oidc>=5,<6
